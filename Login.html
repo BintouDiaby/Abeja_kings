@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abeja Kings - Connexion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-crown"></i>
+                    <h1>Abeja Kings</h1>
+                </div>
+                <p class="login-subtitle">Plateforme de Gestion de Chantiers</p>
+            </div>
+            
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="Votre mot de passe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-role">Rôle</label>
+                    <select id="login-role" required>
+                        <option value="">Sélectionnez votre rôle</option>
+                        <option value="directeur">Direction (Accès complet)</option>
+                        <option value="chef">Chef de Chantier (Accès limité)</option>
+                        <option value="ouvrier">Ouvrier (Accès restreint)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
+            </form>
+            
+            <div class="login-info">
+                <h4>Comptes de test :</h4>
+                <p><strong>Direction:</strong> direction@abeja.kings</p>
+                <p><strong>Chef de chantier:</strong> chef@abeja.kings</p>
+                <p><strong>Ouvrier:</strong> ouvrier@abeja.kings</p>
+                <p><em>Mot de passe:任意 (任意)</em></p>
+            </div>
+            
+            <div class="login-footer">
+                <p>Plateforme sécurisée - Abeja Kings © 2024</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const role = document.getElementById('login-role').value;
+            
+            if (email && password && role) {
+                const user = {
+                    email: email,
+                    role: role,
+                    nom: getNomUtilisateur(email),
+                    dateConnexion: new Date().toISOString()
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'index.html';
+                
+            } else {
+                alert('Veuillez remplir tous les champs');
+            }
+        });
+
+        function getNomUtilisateur(email) {
+            const noms = {
+                'direction@abeja.kings': 'Yao Kouassi',
+                'chef@abeja.kings': 'Kouame N\'Dri', 
+                'ouvrier@abeja.kings': 'Aïcha Coulibaly'
+            };
+            return noms[email] || email.split('@')[0];
+        }
+    </script>
+</body>
+</html>
