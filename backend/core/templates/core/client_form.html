@@ -1,0 +1,10 @@
+{% extends 'core/base.html' %}
+{% block title %}Nouveau client{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="primary" type="submit">Enregistrer</button>
+  <a href="{% url 'core:clients' %}" class="secondary">Annuler</a>
+</form>
+{% endblock %}

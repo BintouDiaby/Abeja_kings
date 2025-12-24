@@ -1,0 +1,507 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Matériaux{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-boxes"></i>
+                Tous les Matériaux
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="materiaux-search" placeholder="Rechercher par nom..." class="search-input">
+                    <select id="materiaux-categorie-filter" class="filter-select">
+                        <option value="">Toutes les catégories</option>
+                        <option value="ciment">Ciment</option>
+                        <option value="acier">Acier</option>
+                        <option value="bois">Bois</option>
+                        <option value="electricite">Électricité</option>
+                        <option value="plomberie">Plomberie</option>
+                        <option value="peinture">Peinture</option>
+                        <option value="outillage">Outillage</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                    <select id="materiaux-stock-filter" class="filter-select">
+                        <option value="">Tous les stocks</option>
+                        <option value="rupture">En rupture</option>
+                        <option value="faible">Stock faible</option>
+                        <option value="normal">Stock normal</option>
+                    </select>
+                </div>
+                <a href="{% url 'core:materiau_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Matériau
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <!-- Alertes de rupture de stock -->
+        {% if materiaux %}
+        <div class="alerts-section">
+            {% for materiau in materiaux %}
+                {% if materiau.est_en_rupture %}
+                <div class="alert alert-danger alert-dismissible">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Rupture de stock :</strong> {{ materiau.nom }} - Stock actuel : {{ materiau.quantite_stock }} {{ materiau.unite }}
+                    <button class="alert-close" onclick="this.parentElement.style.display='none'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endif %}
+            {% empty %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="table-container">
+            <table id="materiaux-table">
+                <thead>
+                    <tr>
+                        <th>Matériau</th>
+                        <th>Catégorie</th>
+                        <th>Stock Actuel</th>
+                        <th>Seuil Minimum</th>
+                        <th>Prix Unitaire</th>
+                        <th>Fournisseur</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="materiaux-tbody">
+                    {% for materiau in materiaux %}
+                    <tr class="{% if materiau.est_en_rupture %}stock-rupture{% endif %}" data-categorie="{{ materiau.categorie }}" data-stock-status="{% if materiau.est_en_rupture %}rupture{% elif materiau.quantite_stock <= materiau.seuil_minimum|add:10 %}faible{% else %}normal{% endif %}">
+                        <td>
+                            <div class="materiau-info">
+                                <strong>{{ materiau.nom }}</strong>
+                                {% if materiau.description %}
+                                <small class="materiau-description">{{ materiau.description|truncatechars:40 }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="category-badge category-{{ materiau.categorie }}">
+                                {% if materiau.categorie == 'ciment' %}🏗️{% elif materiau.categorie == 'acier' %}🔧{% elif materiau.categorie == 'bois' %}🌳{% elif materiau.categorie == 'electricite' %}⚡{% elif materiau.categorie == 'plomberie' %}🚰{% elif materiau.categorie == 'peinture' %}🎨{% elif materiau.categorie == 'outillage' %}🔨{% else %}📦{% endif %}
+                                {{ materiau.get_categorie_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="stock-info">
+                                <div class="stock-amount {% if materiau.est_en_rupture %}stock-critical{% elif materiau.quantite_stock <= materiau.seuil_minimum %}stock-warning{% endif %}">
+                                    <strong>{{ materiau.quantite_stock }}</strong>
+                                    <small>{{ materiau.unite }}</small>
+                                </div>
+                                <div class="stock-bar">
+                                    <div class="stock-fill" data-stock="{{ materiau.quantite_stock }}" data-max="1000"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="threshold-info">
+                                {{ materiau.seuil_minimum }} {{ materiau.unite }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="price-info">
+                                <strong class="format-number">{{ materiau.prix_unitaire|default:0|floatformat:0 }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            {% if materiau.fournisseur %}
+                            <div class="supplier-info">
+                                <i class="fas fa-truck"></i>
+                                {{ materiau.fournisseur.nom }}
+                            </div>
+                            {% else %}
+                            <span class="no-supplier">Non assigné</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if materiau.est_en_rupture %}
+                            <span class="status-badge status-rupture">
+                                🔴 Rupture
+                            </span>
+                            {% elif materiau.quantite_stock <= materiau.seuil_minimum %}
+                            <span class="status-badge status-warning">
+                                🟡 Stock faible
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-ok">
+                                🟢 OK
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:materiau_update' materiau.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="fas fa-boxes"></i>
+                                <h4>Aucun matériau trouvé</h4>
+                                <p>Commencez par ajouter vos matériaux de construction.</p>
+                                <a href="{% url 'core:materiau_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter un matériau
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.alerts-section {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border-left: 4px solid;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.alert-danger {
+    background: rgba(229, 62, 62, 0.1);
+    border-left-color: var(--danger);
+    color: var(--danger);
+}
+
+.alert-dismissible {
+    padding-right: 40px;
+}
+
+.alert-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius);
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.alert-close:hover {
+    opacity: 1;
+}
+
+.materiau-info strong {
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.materiau-description {
+    color: var(--gray);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.category-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.category-ciment { background: rgba(99, 102, 241, 0.1); color: #6366F1; }
+.category-acier { background: rgba(75, 85, 99, 0.1); color: #374151; }
+.category-bois { background: rgba(34, 197, 94, 0.1); color: #16A34A; }
+.category-electricite { background: rgba(251, 191, 36, 0.1); color: #D97706; }
+.category-plomberie { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
+.category-peinture { background: rgba(236, 72, 153, 0.1); color: #DB2777; }
+.category-outillage { background: rgba(245, 101, 101, 0.1); color: #EF4444; }
+.category-autre { background: rgba(107, 114, 128, 0.1); color: #6B7280; }
+
+.stock-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stock-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.stock-amount strong {
+    font-size: 16px;
+}
+
+.stock-critical strong {
+    color: var(--danger);
+}
+
+.stock-warning strong {
+    color: #D97706;
+}
+
+.stock-bar {
+    width: 60px;
+    height: 4px;
+    background: var(--gray-light);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.stock-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), #16A34A);
+    transition: width 0.3s ease;
+}
+
+.threshold-info {
+    text-align: center;
+    font-size: 14px;
+    color: var(--gray);
+}
+
+.price-info strong {
+    color: var(--success);
+    font-size: 14px;
+}
+
+.supplier-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.supplier-info i {
+    color: var(--primary);
+}
+
+.no-supplier {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-rupture {
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--danger);
+}
+
+.status-warning {
+    background: rgba(251, 191, 36, 0.1);
+    color: #D97706;
+}
+
+.status-ok {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.stock-rupture {
+    background: rgba(229, 62, 62, 0.05);
+    border-left: 3px solid var(--danger);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.btn-edit:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-row {
+    text-align: center;
+}
+
+.empty-state {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: var(--gray);
+}
+
+.empty-state h4 {
+    color: var(--secondary);
+    margin: 0;
+}
+
+.empty-state p {
+    color: var(--gray);
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .section-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-filters {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-select {
+        min-width: 120px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .stock-info {
+        align-items: flex-start;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonctionnalité de recherche et filtrage
+    const searchInput = document.getElementById('materiaux-search');
+    const categorieFilter = document.getElementById('materiaux-categorie-filter');
+    const stockFilter = document.getElementById('materiaux-stock-filter');
+    const tbody = document.getElementById('materiaux-tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+    function filterMateriaux() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const categorieValue = categorieFilter.value;
+        const stockValue = stockFilter.value;
+
+        rows.forEach(row => {
+            const materiauName = row.cells[0].textContent.toLowerCase();
+            const categorie = row.dataset.categorie;
+            const stockStatus = row.dataset.stockStatus;
+
+            const matchesSearch = !searchTerm || materiauName.includes(searchTerm);
+            const matchesCategorie = !categorieValue || categorie === categorieValue;
+            const matchesStock = !stockValue || stockStatus === stockValue;
+
+            row.style.display = matchesSearch && matchesCategorie && matchesStock ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterMateriaux);
+    categorieFilter.addEventListener('change', filterMateriaux);
+    stockFilter.addEventListener('change', filterMateriaux);
+
+    // Calculer la largeur des barres de progression
+    document.querySelectorAll('.stock-fill').forEach(fill => {
+        const stock = parseInt(fill.dataset.stock) || 0;
+        const max = parseInt(fill.dataset.max) || 1000;
+        const percentage = Math.min((stock / max) * 100, 100);
+        fill.style.width = percentage + '%';
+    });
+
+    // Formater les nombres avec des virgules
+    document.querySelectorAll('.format-number').forEach(element => {
+        const number = parseInt(element.textContent.replace(/\s/g, ''));
+        if (!isNaN(number)) {
+            element.textContent = number.toLocaleString('fr-FR');
+        }
+    });
+});
+</script>
+{% endblock %}

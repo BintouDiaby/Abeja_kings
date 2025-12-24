@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapports Journaliers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+            --gray: #adb5bd;
+            --gray-light: #e9ecef;
+            --white: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+        }
+
+        .page-header h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            position: relative;
+        }
+
+        /* Button Styles */
+        .rapport-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.85rem 1.8rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4cc9f0, #3a86ff);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(76, 201, 240, 0.4);
+        }
+
+        /* Form Styles */
+        #form-new-rapport {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border-top: 5px solid var(--primary);
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Rapport List Styles */
+        .rapports-list {
+            margin-top: 2rem;
+        }
+
+        .list-rapports {
+            list-style: none;
+        }
+
+        .rapport-item {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-left: 5px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rapport-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .rapport-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .rapport-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .rapport-title strong {
+            font-size: 1.4rem;
+            color: var(--dark);
+        }
+
+        .chantier-badge {
+            background: linear-gradient(135deg, var(--success), #3a86ff);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .rapport-date {
+            color: var(--gray);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .rapport-body {
+            color: var(--dark);
+        }
+
+        .rapport-description {
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 1.2rem;
+            padding: 1rem;
+            background: rgba(67, 97, 238, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .rapport-content {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .rapport-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--gray-light);
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .rapport-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: var(--gray-light);
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .separator {
+            margin: 2.5rem 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--gray-light), transparent);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 1.8rem;
+            }
+            
+            .page-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .rapport-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .rapport-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animation for new rapport items */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rapport-item {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* Filter section */
+        .filter-section {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Action buttons */
+        .btn-icon {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .btn-edit {
+            color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        .btn-delete {
+            color: #e53e3e;
+        }
+
+        .btn-delete:hover {
+            background: rgba(229, 62, 62, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-list"></i> Rapports journaliers</h2>
+            <p>Rédigez votre rapport de chantier pour la journée. Les chefs et administrateurs voient tous les rapports.</p>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Rapports ce mois</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Rapports en attente</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Chantiers actifs</div>
+            </div>
+        </div>
+
+        <div class="rapport-actions">
+            <button id="btn-new-rapport" class="btn btn-primary" onclick="toggleRapportForm()">
+                <i class="fas fa-plus"></i> Nouveau rapport
+            </button>
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label for="filter-date">Filtrer par date</label>
+                    <input type="date" id="filter-date" class="form-control">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-chantier">Filtrer par chantier</label>
+                    <select id="filter-chantier" class="form-control">
+                        <option value="">Tous les chantiers</option>
+                        <option value="1">Chantier A</option>
+                        <option value="2">Chantier B</option>
+                        <option value="3">Chantier C</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="form-new-rapport" class="rapport-form">
+            <form method="post" action="{% url 'core:rapport_new' %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="nom_redacteur"><i class="fas fa-user-edit"></i> Nom du rédacteur</label>
+                    <input type="text" name="nom_redacteur" id="nom_redacteur" class="form-control" placeholder="Votre nom complet" required>
+                </div>
+                <div class="form-row">
+                    <label for="titre"><i class="fas fa-heading"></i> Titre</label>
+                    <input type="text" name="titre" id="titre" class="form-control" placeholder="Titre du rapport" required>
+                </div>
+                <div class="form-row">
+                    <label for="chantier"><i class="fas fa-hard-hat"></i> Chantier (optionnel)</label>
+                    <select name="chantier" id="chantier" class="form-control">
+                        <option value="">-- Aucun --</option>
+                        <option value="1">Chantier A - Résidence Les Cèdres</option>
+                        <option value="2">Chantier B - Centre Commercial</option>
+                        <option value="3">Chantier C - Rénovation École</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="description"><i class="fas fa-align-left"></i> Résumé</label>
+                    <input type="text" name="description" id="description" class="form-control" placeholder="Courte description des travaux réalisés">
+                </div>
+                <div class="form-row">
+                    <label for="contenu"><i class="fas fa-file-alt"></i> Détails / Contenu</label>
+                    <textarea name="contenu" id="contenu" class="form-control" rows="6" placeholder="Détails des tâches réalisées, présences, incidents, matériel utilisé..." required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Enregistrer le rapport
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="toggleRapportForm()">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <hr class="separator">
+
+        <div class="rapports-list">
+            <h3 style="margin-bottom: 1.5rem; color: var(--dark);">
+                <i class="fas fa-history"></i> Historique des rapports
+            </h3>
+            
+            {% if rapports %}
+                <ul class="list-rapports">
+                    {% for rapport in rapports %}
+                        <li class="rapport-item">
+                            <div class="rapport-header">
+                                <div class="rapport-title">
+                                    <strong>{{ rapport.titre }}</strong>
+                                    {% if rapport.chantier %}
+                                        <span class="chantier-badge">{{ rapport.chantier.nom }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="rapport-date">
+                                    <i class="far fa-calendar"></i> {{ rapport.created_at|date:'d/m/Y H:i' }}
+                                </span>
+                            </div>
+                            <div class="rapport-body">
+                                {% if rapport.description %}
+                                    <p class="rapport-description">{{ rapport.description }}</p>
+                                {% endif %}
+                                <div class="rapport-content">
+                                    {{ rapport.contenu|linebreaksbr }}
+                                </div>
+                                <div class="rapport-meta">
+                                    <span class="rapport-author">
+                                        <div class="author-avatar">{{ rapport.auteur.get_full_name|default:rapport.auteur.username|first|upper }}</div>
+                                        {{ rapport.auteur.get_full_name|default:rapport.auteur.username }}
+                                    </span>
+                                    <div style="display: flex; gap: 1rem; align-items: center;">
+                                        <span>
+                                            <i class="far fa-eye"></i> 12 vues
+                                        </span>
+                                        {% if request.user.userprofile.role == 'admin' %}
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button onclick="editRapport({{ rapport.id }})" class="btn-icon btn-edit" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="post" action="{% url 'core:rapport_delete' rapport.id %}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-icon btn-delete" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-clipboard"></i>
+                    <p>Aucun rapport trouvé.</p>
+                    <p>Créez votre premier rapport en cliquant sur le bouton ci-dessus.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleRapportForm() {
+            const form = document.getElementById('form-new-rapport');
+            const btn = document.getElementById('btn-new-rapport');
+            
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-times"></i> Annuler';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline');
+            } else {
+                form.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-plus"></i> Nouveau rapport';
+                btn.classList.remove('btn-outline');
+                btn.classList.add('btn-primary');
+            }
+        }
+
+        // Animation for new elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const items = document.querySelectorAll('.rapport-item');
+            items.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>

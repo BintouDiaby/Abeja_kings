@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abeja Kings - Connexion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=1.2">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-crown"></i>
+                    <h1>Abeja Kings</h1>
+                </div>
+                <p class="login-subtitle">Plateforme de Gestion de Chantiers</p>
+            </div>
+
+            {% if form.errors %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">
+                    <strong>Erreur :</strong>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            {{ error }}<br>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        {{ error }}<br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Email</label>
+                    {{ form.username }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Mot de passe</label>
+                    {{ form.password }}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
+                <input type="hidden" name="next" value="/" />
+            </form>
+
+            <div class="login-info">
+                <h4>Comptes de test :</h4>
+                <p><strong>Admin:</strong> admin@abeja.kings / admin123</p>
+                <p><strong>Chef:</strong> chef@abeja.kings / password123</p>
+                <p><strong>Ouvrier:</strong> ouvrier@abeja.kings / password123</p>
+            </div>
+
+n            <div class="login-footer">
+                <p>Plateforme sécurisée - Abeja Kings © 2024</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

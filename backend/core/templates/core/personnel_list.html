@@ -1,0 +1,417 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion du Personnel{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-users"></i>
+                Tout le Personnel
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="personnel-search" placeholder="Rechercher par nom, rôle..." class="search-input">
+                    <select id="personnel-statut-filter" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="actif">Actif</option>
+                        <option value="inactif">Inactif</option>
+                    </select>
+                    <select id="personnel-role-filter" class="filter-select">
+                        <option value="">Tous les rôles</option>
+                        <option value="ouvrier">Ouvrier</option>
+                        <option value="chef">Chef de chantier</option>
+                        <option value="technicien">Technicien</option>
+                    </select>
+                </div>
+                <a href="{% url 'core:personnel_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Personnel
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="personnel-table">
+                <thead>
+                    <tr>
+                        <th>Employé</th>
+                        <th>Rôle</th>
+                        <th>Taux Horaire</th>
+                        <th>Contact</th>
+                        <th>Chantier Actuel</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="personnel-tbody">
+                    {% for personne in personnel %}
+                    <tr data-statut="{% if personne.est_actif %}actif{% else %}inactif{% endif %}" data-role="{{ personne.role }}">
+                        <td>
+                            <div class="employee-info">
+                                <div class="employee-avatar">
+                                    <div class="avatar-fallback">{{ personne.user.first_name|first|default:"?" }}{{ personne.user.last_name|first|default:"?" }}</div>
+                                </div>
+                                <div class="employee-details">
+                                    <strong>{{ personne.user.get_full_name }}</strong>
+                                    <small>@{{ personne.user.username }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="role-badge role-{{ personne.role }}">
+                                {% if personne.role == 'chef' %}👑{% elif personne.role == 'technicien' %}🔧{% else %}👷{% endif %}
+                                {{ personne.get_role_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="salary-info">
+                                <strong>{{ personne.taux_horaire|floatformat:0 }} FCFA/h</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-info">
+                                {% if personne.telephone %}
+                                <div class="phone-info">
+                                    <i class="fas fa-phone"></i>
+                                    <a href="tel:{{ personne.telephone }}">{{ personne.telephone }}</a>
+                                </div>
+                                {% endif %}
+                                <div class="address-info">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ personne.adresse|truncatechars:25|default:"Non spécifiée" }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if personne.chantier_actuel %}
+                            <div class="chantier-info">
+                                <i class="fas fa-hard-hat"></i>
+                                <span>{{ personne.chantier_actuel.nom }}</span>
+                            </div>
+                            {% else %}
+                            <span class="no-assignment">Aucun chantier</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge {% if personne.est_actif %}status-actif{% else %}status-inactif{% endif %}">
+                                {% if personne.est_actif %}🟢 Actif{% else %}🔴 Inactif{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:personnel_update' personne.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fas fa-users"></i>
+                                <h4>Aucun personnel trouvé</h4>
+                                <p>Commencez par ajouter vos employés.</p>
+                                <a href="{% url 'core:personnel_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter un employé
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.employee-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.employee-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border: 2px solid white;
+    box-shadow: var(--shadow);
+}
+
+.avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.employee-details strong {
+    display: block;
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.employee-details small {
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.role-chef {
+    background: rgba(214, 158, 46, 0.1);
+    color: #B7791F;
+}
+
+.role-technicien {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.role-ouvrier {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366F1;
+}
+
+.salary-info strong {
+    color: var(--success);
+    font-size: 14px;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.phone-info, .address-info, .chantier-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.phone-info i, .address-info i, .chantier-info i {
+    color: var(--primary);
+    width: 12px;
+}
+
+.phone-info a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.phone-info a:hover {
+    text-decoration: underline;
+}
+
+.chantier-info {
+    font-size: 13px;
+}
+
+.chantier-info span {
+    font-weight: 500;
+}
+
+.no-assignment {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-actif {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.status-inactif {
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--danger);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.btn-edit:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-row {
+    text-align: center;
+}
+
+.empty-state {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: var(--gray);
+}
+
+.empty-state h4 {
+    color: var(--secondary);
+    margin: 0;
+}
+
+.empty-state p {
+    color: var(--gray);
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .section-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-filters {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-select {
+        min-width: 120px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .employee-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonctionnalité de recherche et filtrage
+    const searchInput = document.getElementById('personnel-search');
+    const statutFilter = document.getElementById('personnel-statut-filter');
+    const roleFilter = document.getElementById('personnel-role-filter');
+    const tbody = document.getElementById('personnel-tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+    function filterPersonnel() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statutValue = statutFilter.value;
+        const roleValue = roleFilter.value;
+
+        rows.forEach(row => {
+            const employeeName = row.cells[0].textContent.toLowerCase();
+            const statut = row.dataset.statut;
+            const role = row.dataset.role;
+
+            const matchesSearch = !searchTerm || employeeName.includes(searchTerm);
+            const matchesStatut = !statutValue || statut === statutValue;
+            const matchesRole = !roleValue || role === roleValue;
+
+            row.style.display = matchesSearch && matchesStatut && matchesRole ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterPersonnel);
+    statutFilter.addEventListener('change', filterPersonnel);
+    roleFilter.addEventListener('change', filterPersonnel);
+});
+</script>
+{% endblock %}

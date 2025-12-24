@@ -1,0 +1,387 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Fournisseurs{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-truck"></i>
+                Tous les Fournisseurs
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="fournisseurs-search" placeholder="Rechercher par nom..." class="search-input">
+                    <select id="fournisseurs-specialite-filter" class="filter-select">
+                        <option value="">Toutes les spécialités</option>
+                        <option value="ciment">Ciment</option>
+                        <option value="acier">Acier</option>
+                        <option value="bois">Bois</option>
+                        <option value="electricite">Électricité</option>
+                        <option value="plomberie">Plomberie</option>
+                        <option value="peinture">Peinture</option>
+                        <option value="outillage">Outillage</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <a href="{% url 'core:fournisseur_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Fournisseur
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="fournisseurs-table">
+                <thead>
+                    <tr>
+                        <th>Fournisseur</th>
+                        <th>Contact</th>
+                        <th>Coordonnées</th>
+                        <th>Spécialité</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="fournisseurs-tbody">
+                    {% for fournisseur in fournisseurs %}
+                    <tr data-specialite="{{ fournisseur.specialite }}">
+                        <td>
+                            <div class="fournisseur-info">
+                                <strong>{{ fournisseur.nom }}</strong>
+                                {% if fournisseur.adresse %}
+                                <small class="fournisseur-adresse">{{ fournisseur.adresse|truncatechars:40 }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-info">
+                                {% if fournisseur.contact %}
+                                <div class="contact-name">
+                                    <i class="fas fa-user"></i>
+                                    {{ fournisseur.contact }}
+                                </div>
+                                {% else %}
+                                <span class="no-contact">Non spécifié</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="coordonnees">
+                                {% if fournisseur.telephone %}
+                                <div class="phone-link">
+                                    <i class="fas fa-phone"></i>
+                                    <a href="tel:{{ fournisseur.telephone }}">{{ fournisseur.telephone }}</a>
+                                </div>
+                                {% endif %}
+                                {% if fournisseur.email %}
+                                <div class="email-link">
+                                    <i class="fas fa-envelope"></i>
+                                    <a href="mailto:{{ fournisseur.email }}">{{ fournisseur.email }}</a>
+                                </div>
+                                {% endif %}
+                                {% if not fournisseur.telephone and not fournisseur.email %}
+                                <span class="no-coordonnees">Aucune coordonnée</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="specialite-badge specialite-{{ fournisseur.specialite }}">
+                                {% if fournisseur.specialite == 'ciment' %}🏗️{% elif fournisseur.specialite == 'acier' %}🔧{% elif fournisseur.specialite == 'bois' %}🌳{% elif fournisseur.specialite == 'electricite' %}⚡{% elif fournisseur.specialite == 'plomberie' %}🚰{% elif fournisseur.specialite == 'peinture' %}🎨{% elif fournisseur.specialite == 'outillage' %}🔨{% else %}📦{% endif %}
+                                {{ fournisseur.get_specialite_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-active">
+                                <i class="fas fa-circle"></i>
+                                Actif
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:fournisseur_update' fournisseur.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-truck"></i>
+                                <h4>Aucun fournisseur trouvé</h4>
+                                <p>Commencez par ajouter vos fournisseurs de matériaux.</p>
+                                <a href="{% url 'core:fournisseur_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter un fournisseur
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.fournisseur-info strong {
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.fournisseur-adresse {
+    color: var(--gray);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.contact-name i {
+    color: var(--primary);
+    width: 12px;
+}
+
+.no-contact {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.coordonnees {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.phone-link, .email-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.phone-link i, .email-link i {
+    color: var(--primary);
+    width: 12px;
+}
+
+.phone-link a, .email-link a {
+    color: var(--secondary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.phone-link a:hover, .email-link a:hover {
+    color: var(--primary);
+}
+
+.no-coordonnees {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.specialite-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.specialite-ciment { background: rgba(99, 102, 241, 0.1); color: #6366F1; }
+.specialite-acier { background: rgba(75, 85, 99, 0.1); color: #374151; }
+.specialite-bois { background: rgba(34, 197, 94, 0.1); color: #16A34A; }
+.specialite-electricite { background: rgba(251, 191, 36, 0.1); color: #D97706; }
+.specialite-plomberie { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
+.specialite-peinture { background: rgba(236, 72, 153, 0.1); color: #DB2777; }
+.specialite-outillage { background: rgba(245, 101, 101, 0.1); color: #EF4444; }
+.specialite-autre { background: rgba(107, 114, 128, 0.1); color: #6B7280; }
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-active {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.status-active i {
+    color: var(--success);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.btn-edit:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-row {
+    text-align: center;
+}
+
+.empty-state {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: var(--gray);
+}
+
+.empty-state h4 {
+    color: var(--secondary);
+    margin: 0;
+}
+
+.empty-state p {
+    color: var(--gray);
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .section-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-filters {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-select {
+        min-width: 120px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .coordonnees {
+        align-items: flex-start;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonctionnalité de recherche et filtrage
+    const searchInput = document.getElementById('fournisseurs-search');
+    const specialiteFilter = document.getElementById('fournisseurs-specialite-filter');
+    const tbody = document.getElementById('fournisseurs-tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+    function filterFournisseurs() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const specialiteValue = specialiteFilter.value;
+
+        rows.forEach(row => {
+            const fournisseurName = row.cells[0].textContent.toLowerCase();
+            const specialite = row.dataset.specialite;
+
+            const matchesSearch = !searchTerm || fournisseurName.includes(searchTerm);
+            const matchesSpecialite = !specialiteValue || specialite === specialiteValue;
+
+            row.style.display = matchesSearch && matchesSpecialite ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterFournisseurs);
+    specialiteFilter.addEventListener('change', filterFournisseurs);
+});
+</script>
+{% endblock %}

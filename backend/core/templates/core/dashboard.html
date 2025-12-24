@@ -1,0 +1,440 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+
+    <style>
+:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --accent-1: #5b6ff0;
+  --accent-2: #8b5cf6;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+}
+
+/* Global layout */
+.dashboard-container{
+    padding:28px;
+    max-width:1320px; /* corrected width */
+    margin:0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+.dashboard-container{animation:fadeIn .45s ease both}
+
+/* Header */
+    .dashboard-header{
+    background: linear-gradient(90deg, rgba(91,111,240,0.10), rgba(139,92,246,0.06));
+    color:#0f172a;
+    padding:10px 14px; /* reduced padding for tighter header */
+    border-radius:12px;
+    margin-bottom:22px;
+    box-shadow: 0 6px 18px rgba(20,25,55,0.06);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:relative; z-index:2;
+}
+    .header-meta{display:flex;align-items:center;gap:8px}
+    .header-meta .small{margin:0;color:var(--muted);font-size:0.95rem}
+    /* Layout slots used in template */
+    .header-left{display:flex;align-items:center;gap:12px}
+    .header-center{flex:1;display:flex;align-items:center}
+    .header-right{display:flex;align-items:center;gap:12px}
+    /* Hide the global base h1 for this page (we render title inside dashboard header) */
+    main.container > h1{display:none}
+    .page-title{font-size:1.25rem;margin:0;font-weight:800;color:#0b1220}
+/* Header actions: spacing and button styles */
+    .header-content{display:flex; align-items:center; gap:18px; flex:1}
+    .header-content h1{font-size:1.7rem; margin:0; font-weight:800; letter-spacing: -0.3px; color: #0b1220}
+
+/* Header actions: spacing and button styles */
+    .header-actions{display:flex; align-items:center; gap:12px; margin-left:auto}
+    .header-actions form{margin:0}
+    .header-actions .btn{padding:8px 12px; border-radius:8px; font-weight:600}
+    /* smaller square primary button used in header */
+    .header-btn{padding:8px; width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px}
+    .header-btn i{font-size:1.15rem}
+    .header-actions .btn.btn-primary{background:var(--accent-1); color:#fff; border:none}
+    .header-actions .btn.btn-outline{background: transparent; border:1px solid rgba(15,23,42,0.06); color:var(--muted)}
+    .header-actions .btn.btn-outline:hover{background:rgba(15,23,42,0.02)}
+    .header-actions .logout-spacer{margin-left:20px}
+
+    /* Slightly larger icon and clearer stat fonts */
+    .dashboard-header h1 i{margin-right:8px; color:var(--accent-1); font-size:1.15em}
+    .stat-content h3{font-size:1.6rem}
+    .stat-content p{font-size:0.95rem}
+
+/* Stats grid */
+.stats-grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:22px; margin-bottom:42px}
+.stat-card{
+  background:var(--card);
+  border-radius:14px;
+  padding:18px;
+  display:flex; align-items:center; gap:18px;
+  box-shadow: 0 6px 18px rgba(20,25,55,0.06);
+  transition: transform .22s cubic-bezier(.2,.9,.3,1), box-shadow .22s;
+  position:relative; overflow:hidden; border:1px solid rgba(16,24,40,0.03)
+}
+.stat-card:hover{transform:translateY(-6px); box-shadow: 0 14px 40px rgba(20,25,55,0.09)}
+
+/* Icon */
+.stat-icon{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted);background:linear-gradient(180deg,#f7f9fc,#f2f4f8)}
+.stat-icon.active{background:linear-gradient(180deg,#16a34a,#4ade80); color:#fff}
+.stat-icon.completed{background:linear-gradient(180deg,#2563eb,#3b82f6); color:#fff}
+.stat-icon.money{background:linear-gradient(180deg,#d97706,#f59e0b); color:#fff}
+
+.stat-content h3{font-size:1.7rem;margin:0;color:#0f172a;font-weight:700}
+.stat-content p{margin:2px 0 0;color:var(--muted);font-size:0.95rem}
+.warning{color:var(--danger); font-weight:700}
+
+/* Decorative halo */
+.stat-card::after{content:'';position:absolute;right:-40px;bottom:-40px;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06));filter:blur(6px);transform:scale(.95);transition:transform .3s}
+.stat-card:hover::after{transform:scale(1.25)}
+
+/* Content grid */
+.content-grid{display:grid; grid-template-columns: 1fr 1fr; gap:28px}
+.content-card{background:var(--card); border-radius:12px; overflow:hidden; box-shadow: 0 8px 30px rgba(15,23,42,0.04); border:1px solid rgba(15,23,42,0.02)}
+.card-header{padding:18px 20px;background:linear-gradient(180deg, rgba(245,247,250,0.6), rgba(249,250,251,0.6)); display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(15,23,42,0.03)}
+.card-header h2{font-size:1.05rem;margin:0;color:#111;font-weight:700}
+.btn-link{color:var(--accent-1); font-weight:600}
+
+.card-content{padding:14px}
+.recent-list{display:flex;flex-direction:column;gap:12px;padding:10px}
+.recent-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:#fbfdff;border:1px solid rgba(15,23,42,0.02);transition:transform .18s, background .18s}
+.recent-item:hover{transform:translateY(-3px); background:#f7fbff}
+.item-info h4{margin:0;font-size:1rem;color:#0f172a;font-weight:700}
+.item-info p{margin:4px 0 0;color:var(--muted);font-size:0.9rem}
+
+/* Status badges */
+.status-badge{padding:6px 12px;border-radius:999px;font-size:0.78rem;font-weight:700;text-transform:uppercase}
+.status-badge.Payée{background:var(--success);color:#fff}
+.status-badge.EnCours{background:var(--warning);color:#fff}
+.status-badge.EnRetard{background:var(--danger);color:#fff}
+
+.quick-actions{margin-top:40px}
+.actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.action-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:10px;color:var(--accent-1);text-decoration:none;background:linear-gradient(90deg, rgba(91,111,240,0.08), rgba(139,92,246,0.06));border:1px solid rgba(91,111,240,0.08);box-shadow:0 6px 14px rgba(20,25,55,0.04);transition:transform .18s, box-shadow .18s}
+.action-card:hover{transform:translateY(-4px); box-shadow:0 12px 30px rgba(20,25,55,0.08); background:linear-gradient(90deg, rgba(91,111,240,0.12), rgba(139,92,246,0.10));}
+
+/* Make stat cards clickable (no visual change required) */
+.stat-link{display:block;color:inherit;text-decoration:none}
+
+/* Responsive */
+@media (max-width:1000px){.stats-grid{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}}
+@media (max-width:640px){.stats-grid{grid-template-columns:1fr}.actions-grid{grid-template-columns:1fr}.header-content{flex-direction:column;align-items:flex-start}.dashboard-header{padding:18px}}
+  </style>
+{% endblock %}
+
+{% block title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+  <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-inline">
+                    <i class="fas fa-crown" aria-hidden="true"></i>
+                    <span class="site-name">Abeja Kings</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <h1 class="page-title">Tableau de Bord</h1>
+            </div>
+
+            <div class="header-right">
+                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary header-btn" title="Nouveau chantier">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                </a>
+
+                <div class="user-block" style="display:flex;align-items:center;gap:10px">
+                    <div class="user-avatar" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--accent-1);color:#fff;font-weight:700">{{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}</div>
+                    <div class="user-info" style="display:flex;flex-direction:column">
+                        <div class="user-name" style="font-weight:700">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="user-role small muted">{% if request.user.userprofile %}{{ request.user.userprofile.get_role_display }}{% endif %}</div>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}" class="logout-form" style="margin-left:8px">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline small">Se déconnecter</button>
+                    </form>
+                </div>
+            </div>
+        </header>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <a href="{% url 'core:chantiers' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_chantiers }}</h3>
+                    <p>Total Chantiers</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:chantiers' %}?statut=en_cours" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon active">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ chantiers_actifs }}</h3>
+                    <p>Chantiers Actifs</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:chantiers' %}?statut=termine" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon completed">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ chantiers_termines }}</h3>
+                    <p>Chantiers Terminés</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:personnel' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_personnel }}</h3>
+                    <p>Personnel Actif</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:materiaux' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_materiaux }}</h3>
+                    <p>Matériaux</p>
+                    {% if materiaux_rupture > 0 %}
+                    <small class="warning">{{ materiaux_rupture }} en rupture</small>
+                    {% endif %}
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:clients' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_clients }}</h3>
+                    <p>Clients</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:fournisseurs' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_fournisseurs }}</h3>
+                    <p>Fournisseurs</p>
+                </div>
+            </div>
+            </a>
+
+            <a href="{% url 'core:factures' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon money">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+                <div class="stat-content">
+                    {% if show_finances %}
+                        <h3>{{ montant_factures_mois|floatformat:0 }}€</h3>
+                        <p>Factures (ce mois)</p>
+                    {% else %}
+                        <h3>—</h3>
+                        <p>Accès restreint</p>
+                    {% endif %}
+                </div>
+            </div>
+            </a>
+
+            {# Rapports stat card #}
+            <a href="{% url 'core:rapports' %}" class="stat-link">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ rapports_count }}</h3>
+                    <p>Rapports</p>
+                </div>
+            </div>
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <div class="content-grid">
+                <!-- Recent Projects -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-clock"></i> Chantiers Récents</h2>
+                        <div>
+                            <a href="{% url 'core:chantiers' %}" class="btn-link" title="Voir tout">Voir tout</a>
+                            <a href="{% url 'core:chantiers' %}" class="btn-link" title="Gérer les chantiers">Gérer</a>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        {% if chantiers_recents %}
+                        <div class="recent-list">
+                            {% for chantier in chantiers_recents %}
+                            <div class="recent-item">
+                                <div class="item-info">
+                                    <h4>{{ chantier.nom }}</h4>
+                                    <p>{{ chantier.client.nom }} • {{ chantier.get_statut_display }}</p>
+                                </div>
+                                <div class="item-actions">
+                                    {# Edit link if chantier_update exists #}
+                                    <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-sm" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-building"></i>
+                            <p>Aucun chantier récent</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Invoices -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-file-invoice"></i> Factures Récentes</h2>
+                        <div>
+                            <a href="{% url 'core:factures' %}" class="btn-link" title="Voir tout">Voir tout</a>
+                            <a href="{% url 'core:factures' %}" class="btn-link" title="Gérer les factures">Gérer</a>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        {% if factures_recentes %}
+                        <div class="recent-list">
+                            {% for facture in factures_recentes %}
+                            <div class="recent-item">
+                                <div class="item-info">
+                                    <h4>Facture #{{ facture.numero }}</h4>
+                                    <p>{{ facture.client.nom }} • {{ facture.montant_total|floatformat:0 }}€</p>
+                                </div>
+                                <div class="item-status">
+                                    <span class="status-badge {{ facture.statut }}">{{ facture.get_statut_display }}</span>
+                                </div>
+                                <div class="item-actions">
+                                    {# No individual edit view for facture; link to factures list for management #}
+                                    <a href="{% url 'core:factures' %}" class="btn-sm" title="Gérer la facture">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-file-invoice"></i>
+                            <p>Aucune facture récente</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                        <!-- Rapports Récents -->
+                        <div class="content-card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-file-alt"></i> Rapports Récents</h2>
+                                <div>
+                                    <a href="{% url 'core:rapports' %}" class="btn-link" title="Voir tout">Voir tout</a>
+                                    <a href="{% url 'core:rapports' %}" class="btn-link" title="Gérer les rapports">Gérer</a>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                {% if rapports_recents %}
+                                <div class="recent-list">
+                                    {% for rapport in rapports_recents %}
+                                    <div class="recent-item">
+                                        <div class="item-info">
+                                            <h4>{{ rapport.titre }}</h4>
+                                            <p>{{ rapport.auteur.get_full_name|default:rapport.auteur.username }} • {{ rapport.date }}</p>
+                                        </div>
+                                        <div class="item-actions">
+                                            {# Link to rapports list (no per-rapport edit page) #}
+                                            <a href="{% url 'core:rapports' %}" class="btn-sm" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>Aucun rapport récent</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2>Actions Rapides</h2>
+            <div class="actions-grid">
+                <a href="{% url 'core:chantier_create' %}" class="action-card">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nouveau Chantier</span>
+                </a>
+                <a href="{% url 'core:client_new' %}" class="action-card">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Nouveau Client</span>
+                </a>
+                <a href="{% url 'core:facture_new' %}" class="action-card">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Nouvelle Facture</span>
+                </a>
+                <a href="{% url 'core:materiaux' %}" class="action-card">
+                    <i class="fas fa-boxes"></i>
+                    <span>Gérer Matériaux</span>
+                </a>
+                <a href="{% url 'core:personnel' %}" class="action-card">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Gérer Personnel</span>
+                </a>
+                <a href="{% url 'core:fournisseurs' %}" class="action-card">
+                    <i class="fas fa-truck"></i>
+                    <span>Gérer Fournisseurs</span>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

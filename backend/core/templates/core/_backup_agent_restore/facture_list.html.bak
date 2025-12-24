@@ -1,0 +1,127 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Factures{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-file-invoice-dollar"></i>
+                Toutes les Factures
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="factures-search" placeholder="Rechercher par client..." class="search-input">
+                    <input type="date" id="factures-date-filter" class="filter-input">
+                </div>
+                <a href="{% url 'core:facture_new' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouvelle Facture
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistiques des factures -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ factures|length }}</div>
+                    <div class="stat-label">Total Factures</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">
+                        {% load mathfilters %}
+                        {% for f in factures %}
+                            {% if forloop.first %}{{ f.total }}{% else %}{{ result|add:f.total }}{% endif %}
+                            {% if not forloop.last %}{% else %}{{ result|default:0 }}{% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %} FCFA
+                    </div>
+                    <div class="stat-label">Montant Total</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="factures-table">
+                <thead>
+                    <tr>
+                        <th>ID Facture</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Montant Total</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="factures-tbody">
+                    {% for f in factures %}
+                    <tr data-client="{{ f.client.nom|lower }}" data-date="{{ f.date }}">
+                        <td>
+                            <div class="facture-id">
+                                <strong>#{{ f.id }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="client-info">
+                                <i class="fas fa-user"></i>
+                                {{ f.client.nom }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar"></i>
+                                {{ f.date|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="amount-info">
+                                <strong class="format-number">{{ f.total|default:0|floatformat:0 }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-paid">
+                                <i class="fas fa-check-circle"></i>
+                                Payée
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-view" title="Voir détails" data-facture-id="{{ f.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-action btn-print" title="Imprimer" data-facture-id="{{ f.id }}">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <h4>Aucune facture trouvée</h4>
+                                <p>Créez votre première facture pour commencer.</p>
+                                <a href="{% url 'core:facture_new' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Créer une facture
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

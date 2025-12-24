@@ -1,0 +1,504 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Chantiers{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-hard-hat"></i>
+                Tous les Chantiers
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="chantiers-search" placeholder="Rechercher par nom, client..." class="search-input">
+                    <select id="chantiers-statut-filter" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="planifie">Planifié</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="suspendu">Suspendu</option>
+                        <option value="termine">Terminé</option>
+                        <option value="annule">Annulé</option>
+                    </select>
+                </div>
+                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Chantier
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="chantiers-table">
+                <thead>
+                    <tr>
+                        <th>Nom du Chantier</th>
+                        <th>Client</th>
+                        <th>Date Début</th>
+                        <th>Date Fin Prévue</th>
+                        <th>Budget</th>
+                        <th>Avancement</th>
+                        <th>Statut</th>
+                        <th>Chef Chantier</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="chantiers-tbody">
+                    {% for chantier in chantiers %}
+                    <tr data-statut="{{ chantier.statut }}">
+                        <td>
+                            <div class="chantier-info">
+                                <strong>{{ chantier.nom }}</strong>
+                                {% if chantier.description %}
+                                <small class="chantier-description">{{ chantier.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="client-info">
+                                <i class="fas fa-user"></i>
+                                {{ chantier.client.nom|default:"Non assigné" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-start"></i>
+                                {{ chantier.date_debut|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-end"></i>
+                                {{ chantier.date_fin_prevue|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="budget-info">
+                                <strong class="format-number">{{ chantier.budget|default:0|floatformat:0 }}</strong> FCFA
+                            </div>
+                        </td>
+                        <td>
+                            <div class="progress-cell">
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-{{ chantier.pk }}" data-progress="{{ chantier.avancement }}"></div>
+                                </div>
+                                <span class="progress-text">{{ chantier.avancement }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ chantier.statut }}">
+                                {% if chantier.statut == 'planifie' %}📋{% elif chantier.statut == 'en_cours' %}🔄{% elif chantier.statut == 'termine' %}✅{% elif chantier.statut == 'annule' %}❌{% endif %}
+                                {{ chantier.get_statut_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if chantier.chef_chantier %}
+                            <div class="chef-info">
+                                <i class="fas fa-user-crown"></i>
+                                {{ chantier.chef_chantier.get_full_name }}
+                            </div>
+                            {% else %}
+                            <span class="no-assignment">Non assigné</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <i class="fas fa-hard-hat"></i>
+                                <h4>Aucun chantier trouvé</h4>
+                                <p>Commencez par créer votre premier chantier.</p>
+                                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Créer un chantier
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal confirm-modal">
+        <div class="modal-header">
+            <h3>Confirmer la suppression</h3>
+        </div>
+        <div class="modal-body">
+            <p>Êtes-vous sûr de vouloir supprimer le chantier "<strong id="delete-chantier-name"></strong>" ?</p>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Cette action est irréversible et supprimera toutes les données associées au chantier.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">
+                <i class="fas fa-trash"></i> Supprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-filters {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 250px;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    outline: none;
+}
+
+.chantier-info strong {
+    display: block;
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.chantier-description {
+    color: var(--gray);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.client-info, .date-info, .chef-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.client-info i, .date-info i, .chef-info i {
+    color: var(--primary);
+    width: 14px;
+}
+
+.budget-info strong {
+    color: var(--success);
+    font-size: 14px;
+}
+
+.progress-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.progress-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--gray-light);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-planifie {
+    background: rgba(214, 158, 46, 0.1);
+    color: #B7791F;
+}
+
+.status-en_cours {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.status-suspendu {
+    background: rgba(237, 137, 54, 0.1);
+    color: #ED8936;
+}
+
+.status-termine {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.status-annule {
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--danger);
+}
+
+.no-assignment {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.btn-edit:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--danger);
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-row {
+    text-align: center;
+}
+
+.empty-state {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: var(--gray);
+}
+
+.empty-state h4 {
+    color: var(--secondary);
+    margin: 0;
+}
+
+.empty-state p {
+    color: var(--gray);
+    margin: 0;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border-left: 4px solid;
+    margin: 16px 0;
+}
+
+.alert-warning {
+    background: rgba(237, 137, 54, 0.1);
+    border-left-color: #ED8936;
+    color: #B7791F;
+}
+
+.alert i {
+    margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+    .section-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-filters {
+        width: 100%;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: auto;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonctionnalité de recherche et filtrage
+    const searchInput = document.getElementById('chantiers-search');
+    const statutFilter = document.getElementById('chantiers-statut-filter');
+    const tbody = document.getElementById('chantiers-tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+    function filterChantiers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statutValue = statutFilter.value;
+
+        rows.forEach(row => {
+            const chantierName = row.cells[0].textContent.toLowerCase();
+            const clientName = row.cells[1].textContent.toLowerCase();
+            const statut = row.dataset.statut;
+
+            const matchesSearch = !searchTerm ||
+                chantierName.includes(searchTerm) ||
+                clientName.includes(searchTerm);
+            const matchesStatut = !statutValue || statut === statutValue;
+
+            row.style.display = matchesSearch && matchesStatut ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterChantiers);
+    statutFilter.addEventListener('change', filterChantiers);
+
+    // Fonctionnalité de suppression
+    let chantierToDelete = null;
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            chantierToDelete = {
+                id: this.dataset.id,
+                name: this.dataset.name
+            };
+            openDeleteModal(chantierToDelete.name);
+        });
+    });
+
+    function openDeleteModal(chantierName) {
+        document.getElementById('delete-chantier-name').textContent = chantierName;
+        document.getElementById('deleteModal').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('deleteModal').classList.add('show');
+        }, 10);
+    }
+
+    window.closeDeleteModal = function() {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        chantierToDelete = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        if (!chantierToDelete) return;
+
+        try {
+            const response = await fetch(`/chantiers/${chantierToDelete.id}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            if (response.ok) {
+                // Recharger la page ou supprimer la ligne
+                window.location.reload();
+            } else {
+                throw new Error('Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la suppression du chantier');
+        }
+    });
+
+    // Initialiser les barres de progression
+    document.querySelectorAll('.progress-fill').forEach(fill => {
+        const progress = fill.dataset.progress;
+        fill.style.width = progress + '%';
+    });
+
+    // Formater les nombres avec des virgules
+    document.querySelectorAll('.format-number').forEach(element => {
+        const number = parseInt(element.textContent.replace(/\s/g, ''));
+        if (!isNaN(number)) {
+            element.textContent = number.toLocaleString('fr-FR');
+        }
+    });
+});
+</script>
+{% endblock %}

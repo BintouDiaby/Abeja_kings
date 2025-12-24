@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abeja Kings - Gestion de Chantiers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.2">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Abeja Kings</h1>
+                    <span class="subtitle">Gestion de Chantiers</span>
+                </div>
+            </div>
+            
+            <div class="user-role-badge" id="roleBadge">
+                <span id="currentRole">Chargement...</span>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-item" data-page="chantiers">
+                    <i class="fas fa-hard-hat"></i>
+                    <span>Gestion Chantiers</span>
+                </div>
+                <div class="nav-item" data-page="personnel">
+                    <i class="fas fa-users"></i>
+                    <span>Gestion Personnel</span>
+                </div>
+                <div class="nav-item" data-page="materiaux">
+                    <i class="fas fa-boxes"></i>
+                    <span>Gestion Matériaux</span>
+                </div>
+                <div class="nav-item" data-page="devis-factures">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Devis & Factures</span>
+                </div>
+                <div class="nav-item" data-page="rapports">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Rapports Journaliers</span>
+                </div>
+                <div class="nav-item" data-page="fournisseurs">
+                    <i class="fas fa-truck"></i>
+                    <span>Fournisseurs</span>
+                </div>
+                <div class="nav-item" data-page="clients">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Clients</span>
+                </div>
+            </div>
+            
+            <!-- User profile in sidebar -->
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <div class="avatar-fallback" id="userInitials">AK</div>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="sidebarUserName">Admin Abeja</span>
+                        <span class="user-role" id="sidebarUserRole">Administrateur</span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 id="page-title">Accueil</h2>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Rechercher...">
+                    </div>
+                    
+                    <div class="header-actions">
+                        <div class="notification-badge">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">3</span>
+                        </div>
+                        
+                        <div class="header-user">
+                            <div class="user-info">
+                                <span class="user-name" id="headerUserName">Admin Abeja</span>
+                                <span class="user-role" id="headerUserRole">Administrateur</span>
+                            </div>
+                            <div class="user-avatar">
+                                <div class="avatar-fallback" id="headerUserInitials">AK</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard supprimé (demandé) -->
+            <div id="dashboard-content" class="page-content" style="display:none;">
+                <!-- Le contenu du tableau de bord a été supprimé par demande de l'utilisateur. -->
+            </div>
+
+            <!-- Other pages content -->
+            <div id="other-content" class="page-content" style="display: none;">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Chantier -->
+    <div id="modal-new-chantier" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouveau Chantier</h3>
+                <button class="btn btn-close" onclick="closeModal('modal-new-chantier')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-chantier" class="modern-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="chantier-nom">Nom du Chantier</label>
+                            <input type="text" id="chantier-nom" placeholder="Ex: Rénovation Appartement Modest" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="chantier-client">Client</label>
+                            <select id="chantier-client" required>
+                                <option value="">Sélectionner un client</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="chantier-budget">Budget (FCFA)</label>
+                            <input type="number" id="chantier-budget" placeholder="50000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="chantier-duree">Durée estimée (jours)</label>
+                            <input type="number" id="chantier-duree" placeholder="90" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="chantier-description">Description</label>
+                        <textarea id="chantier-description" placeholder="Description du chantier..." rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modal-new-chantier')">Annuler</button>
+                <button class="btn btn-primary" onclick="saveNewChantier()">
+                    <i class="fas fa-plus"></i> Créer le Chantier
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Client -->
+    <div id="modal-new-client" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouveau Client</h3>
+                <button class="btn btn-close" onclick="closeModal('modal-new-client')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-client" class="modern-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-nom">Nom / Raison sociale</label>
+                            <input type="text" id="client-nom" placeholder="Ex: Kouassi Traoré" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-email">Email</label>
+                            <input type="email" id="client-email" placeholder="contact@exemple.ci">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-telephone">Téléphone</label>
+                            <input type="text" id="client-telephone" placeholder="+225 21 23 45 67">
+                        </div>
+                        <div class="form-group">
+                            <label for="client-adresse">Adresse</label>
+                            <input type="text" id="client-adresse" placeholder="Marcory, Abidjan">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modal-new-client')">Annuler</button>
+                <button class="btn btn-primary" onclick="saveNewClient()">
+                    <i class="fas fa-plus"></i> Ajouter le Client
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouvelle Facture -->
+    <div id="modal-new-facture" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouvelle Facture</h3>
+                <button class="btn btn-close" onclick="closeModal('modal-new-facture')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-facture" class="modern-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="facture-client">Client</label>
+                            <select id="facture-client" required>
+                                <option value="">Chargement...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="facture-chantier">Chantier</label>
+                            <select id="facture-chantier" required>
+                                <option value="">Chargement...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1 1 60%;">
+                            <label>Lignes de facture</label>
+                            <div class="lines-container">
+                                <table class="lines-table" id="facture-lines-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                            <th>Quantité</th>
+                                <th>PU (FCFA)</th>
+                                            <th>Montant</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="facture-lines-body">
+                                        <!-- rows ajoutées dynamiquement -->
+                                    </tbody>
+                                </table>
+                                <button type="button" class="btn btn-outline" onclick="addFactureLineRow()">
+                                    <i class="fas fa-plus"></i> Ajouter une ligne
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="flex: 1 1 35%;">
+                            <label for="facture-date">Date</label>
+                            <input type="date" id="facture-date" required>
+
+                            <label for="facture-statut" style="margin-top:12px">Statut</label>
+                            <select id="facture-statut">
+                                <option value="pending">En Attente</option>
+                                <option value="active">En Cours</option>
+                                <option value="completed">Payée</option>
+                            </select>
+
+                            <label for="facture-tva" style="margin-top:12px">TVA (%)</label>
+                            <input type="number" id="facture-tva" value="18" min="0" step="0.1">
+
+                            <div class="totals" style="margin-top:12px;">
+                                <div>Sous-total: <strong id="facture-subtotal">0 FCFA</strong></div>
+                                <div>TVA: <strong id="facture-tva-montant">0 FCFA</strong></div>
+                                <div>Total TTC: <strong id="facture-total-ttc">0 FCFA</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modal-new-facture')">Annuler</button>
+                <button class="btn btn-primary" onclick="saveNewFacture()">
+                    <i class="fas fa-plus"></i> Créer la Facture
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Rapport -->
+    <div id="modal-new-rapport" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouveau Rapport Journalier</h3>
+                <button class="btn btn-close" onclick="closeModal('modal-new-rapport')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-rapport" class="modern-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rapport-chantier">Chantier</label>
+                            <select id="rapport-chantier" required>
+                                <option value="">Chargement...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rapport-date">Date</label>
+                            <input type="date" id="rapport-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rapport-auteur">Auteur</label>
+                            <input type="text" id="rapport-auteur" placeholder="Nom de l'auteur" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rapport-titre">Titre</label>
+                            <input type="text" id="rapport-titre" placeholder="Titre du rapport" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="rapport-resume">Résumé / Observations</label>
+                        <textarea id="rapport-resume" rows="4" placeholder="Détails des travaux, incidents, présences..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modal-new-rapport')">Annuler</button>
+                <button class="btn btn-primary" onclick="saveNewRapport()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/app.js' %}?v=1.2"></script>
+</body>
+</html>

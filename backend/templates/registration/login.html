@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=1.2">
+{% endblock %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">
+                <i class="fas fa-crown"></i>
+                <h1>Abeja Kings</h1>
+            </div>
+            <p class="login-subtitle">Plateforme de gestion</p>
+        </div>
+
+        {% if form.errors %}
+            <div style="color: red; margin-bottom: 12px; text-align: center;">
+                <strong>Erreur :</strong>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        {{ error }}<br>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    {{ error }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Email</label>
+                {{ form.username }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password">Mot de passe</label>
+                {{ form.password }}
+            </div>
+
+                <div class="form-group" style="margin-top:8px;">
+                    <label for="id_remember_me" style="font-weight:normal;">
+                        <input type="checkbox" name="remember_me" id="id_remember_me"> Se souvenir de moi
+                    </label>
+                </div>
+            <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+            <input type="hidden" name="next" value="{% url 'core:post_login' %}" />
+        </form>
+
+        <div class="login-info">
+            <h4>Comptes de test :</h4>
+            <p><strong>Admin:</strong> admin@abeja.kings / admin123</p>
+            <p><strong>Chef:</strong> chef@abeja.kings / password123</p>
+            <p><strong>Ouvrier:</strong> ouvrier@abeja.kings / password123</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

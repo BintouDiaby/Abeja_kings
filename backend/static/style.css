@@ -1,0 +1,8 @@
+/* REMOVED: This file was a temporary copy of the root style.css placed under backend/static for dev.
+   It has been neutralized as part of the rollback. Use the root style.css at the repository root.
+ */
+
+/* placeholder to avoid serving an old copy unintentionally */
+html,body{height:100%;}
+body{font-family:Inter, sans-serif;background:#fff;color:#000;padding:20px}
+/* Real styles live in the repository root style.css */

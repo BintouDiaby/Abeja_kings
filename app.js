@@ -3,7 +3,7 @@ function checkAuthentication() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
     if (!currentUser) {
-        window.location.href = 'login.html';
+        window.location.href = '/login/';
         return false;
     }
     
@@ -50,7 +50,7 @@ class ReportsManager {
 function logout() {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
         localStorage.removeItem('currentUser');
-        window.location.href = 'login.html';
+        window.location.href = '/login/';
     }
 }
 
@@ -72,6 +72,12 @@ function formatCurrency(amount) {
     } catch (e) {
         return amount + ' FCFA';
     }
+}
+
+// Récupérer cookie (utilitaire CSRF)
+function getCookie(name) {
+    const matches = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
 function getStatusText(status) {
@@ -868,10 +874,48 @@ function saveNewFacture() {
         statut: statut || 'pending'
     };
 
-    DataManager.addFacture(newFacture);
-    closeModal('modal-new-facture');
-    showNotification('Facture créée avec succès', 'success');
-    window.app.showPage('devis-factures');
+    // Préparer l'envoi au backend Django via POST (FormData)
+    const clientName = (DataManager.getClients().find(c => c.id === clientId) || {}).nom || clientId;
+    const formData = new FormData();
+    formData.append('client_nom', clientName);
+    formData.append('date', date);
+    formData.append('subtotal', subtotal);
+    formData.append('tva_pct', tvaPct);
+    formData.append('tva_amount', tvaMontant);
+    formData.append('total', totalTTC);
+    formData.append('statut', statut || 'pending');
+    formData.append('lines_json', JSON.stringify(lignes));
+
+    // Determine CSRF token: prefer token returned by /set-csrf/ (window._csrftoken)
+    const csrftoken = window._csrftoken || getCookie('csrftoken');
+
+    const backend = window.BACKEND_ORIGIN || 'http://127.0.0.1:8000';
+    fetch(`${backend}/factures/new/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: csrftoken ? { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' } : { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+    }).then(r => r.json()).then(resp => {
+        if (resp && resp.success) {
+            closeModal('modal-new-facture');
+            showNotification('Facture enregistrée côté serveur', 'success');
+            // rediriger vers la liste Django
+            window.location.href = resp.redirect || '/factures/';
+        } else {
+            // fallback local
+            DataManager.addFacture(newFacture);
+            closeModal('modal-new-facture');
+            showNotification('Facture enregistrée en local (fallback)', 'info');
+            window.app.showPage('devis-factures');
+        }
+    }).catch(err => {
+        console.error('Erreur en sauvegardant la facture:', err);
+        // fallback local
+        DataManager.addFacture(newFacture);
+        closeModal('modal-new-facture');
+        showNotification('Facture enregistrée en local (offline)', 'info');
+        window.app.showPage('devis-factures');
+    });
 }
 
 function saveNewRapport() {
@@ -1042,6 +1086,24 @@ class AbejaKingsApp {
 
         // Stocker pour vérification rapide
         this._allowedPages = allowed;
+
+        // Masquer la carte "Chiffre d'Affaires" pour les chefs de chantier
+        try {
+            const caEl = document.getElementById('ca-montant');
+            if (caEl) {
+                const caCard = caEl.closest('.stat-card');
+                if (caCard) {
+                    if (role === 'chef') {
+                        caCard.style.display = 'none';
+                    } else {
+                        caCard.style.display = '';
+                    }
+                }
+            }
+        } catch (e) {
+            // si erreur, ne pas bloquer l'application
+            console.warn('Erreur en appliquant visibilité CA:', e);
+        }
     }
 
     /**
@@ -1365,7 +1427,41 @@ function saveNewChantier() {
 }
 
 // Initialize app when DOM is loaded
+// Ensure CSRF cookie is set by calling backend endpoint (useful when serving SPA from Django static)
+function requestCsrf() {
+    // Try same-origin first (when front served by Django). If that fails
+    // (e.g. front served with Live Server on another port), fall back to
+    // calling the backend explicitly and include credentials so cookies
+    // / CSRF headers can be set/used.
+    try {
+        // Try same-origin and read token from JSON if returned
+        fetch('/set-csrf/', { credentials: 'same-origin' })
+            .then(r => r.json().catch(() => ({})))
+            .then(data => {
+                if (data && data.csrftoken) {
+                    window._csrftoken = data.csrftoken;
+                }
+            })
+            .catch(() => {
+                // fallback to known backend origin used in dev
+                const backend = window.BACKEND_ORIGIN || 'http://127.0.0.1:8000';
+                fetch(`${backend}/set-csrf/`, { credentials: 'include' })
+                    .then(r => r.json().catch(() => ({})))
+                    .then(data => {
+                        if (data && data.csrftoken) {
+                            window._csrftoken = data.csrftoken;
+                        }
+                    })
+                    .catch(() => {});
+            });
+    } catch (e) {
+        console.warn('CSRF request failed', e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Request CSRF cookie first (no-op if not served from same origin)
+    requestCsrf();
     window.app = new AbejaKingsApp();
 });
 

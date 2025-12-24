@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Abeja Kings - Backend</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css">
+</head>
+<body>
+<header>
+  <a href="{% url 'core:dashboard' %}" class="logo">Abeja Kings</a>
+  <nav>
+    <a href="{% url 'core:clients' %}">Clients</a>
+    <a href="{% url 'core:factures' %}">Factures</a>
+    <a href="{% url 'core:users' %}">Utilisateurs</a>
+    <a href="{% url 'admin:index' %}">Admin</a>
+  </nav>
+</header>
+<main class="container">
+  <h1>{% block title %}{% endblock %}</h1>
+  {% if messages %}
+    <ul>
+      {% for m in messages %}
+        <li>{{ m }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+<!-- REMOVED BACKUP: base.html.bak
+     Ce fichier backup a été neutralisé par automatisation pour éviter la confusion.
+     Emplacement original: core/base.html
+     Si vous avez besoin du contenu original, restaurez depuis le contrôle de version. -->
+
+</body>
+</html>

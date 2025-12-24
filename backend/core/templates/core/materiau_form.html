@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if materiau %}Modifier{% else %}Nouveau{% endif %} matériau{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nom">Nom du matériau *</label>
+      <input type="text" id="nom" name="nom" value="{{ materiau.nom|default:'' }}" required>
+    </div>
+    <div class="form-group">
+      <label for="categorie">Catégorie *</label>
+      <select id="categorie" name="categorie" required>
+        <option value="construction" {% if materiau and materiau.categorie == 'construction' %}selected{% endif %}>Matériaux de construction</option>
+        <option value="electricite" {% if materiau and materiau.categorie == 'electricite' %}selected{% endif %}>Électricité</option>
+        <option value="plomberie" {% if materiau and materiau.categorie == 'plomberie' %}selected{% endif %}>Plomberie</option>
+        <option value="peinture" {% if materiau and materiau.categorie == 'peinture' %}selected{% endif %}>Peinture</option>
+        <option value="outillage" {% if materiau and materiau.categorie == 'outillage' %}selected{% endif %}>Outillage</option>
+        <option value="autre" {% if materiau and materiau.categorie == 'autre' %}selected{% endif %}>Autre</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="2">{{ materiau.description|default:'' }}</textarea>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="unite">Unité</label>
+      <input type="text" id="unite" name="unite" value="{{ materiau.unite|default:'unités' }}" placeholder="unités, kg, m², etc.">
+    </div>
+    <div class="form-group">
+      <label for="prix_unitaire">Prix unitaire (FCFA) *</label>
+      <input type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" value="{{ materiau.prix_unitaire|default:'' }}" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="quantite_stock">Quantité en stock</label>
+      <input type="number" id="quantite_stock" name="quantite_stock" min="0" value="{{ materiau.quantite_stock|default:0 }}">
+    </div>
+    <div class="form-group">
+      <label for="seuil_minimum">Seuil minimum</label>
+      <input type="number" id="seuil_minimum" name="seuil_minimum" min="0" value="{{ materiau.seuil_minimum|default:0 }}">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="fournisseur">Fournisseur</label>
+    <select id="fournisseur" name="fournisseur">
+      <option value="">Sélectionner un fournisseur</option>
+      {% for fournisseur in fournisseurs %}
+        <option value="{{ fournisseur.id }}" {% if materiau and materiau.fournisseur and materiau.fournisseur.id == fournisseur.id %}selected{% endif %}>{{ fournisseur.nom }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-actions">
+    <button class="primary" type="submit">Enregistrer</button>
+    <a href="{% url 'core:materiaux' %}" class="secondary">Annuler</a>
+  </div>
+</form>
+{% endblock %}

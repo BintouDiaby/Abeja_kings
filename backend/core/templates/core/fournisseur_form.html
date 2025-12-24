@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if fournisseur %}Modifier{% else %}Nouveau{% endif %} fournisseur{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nom">Nom du fournisseur *</label>
+      <input type="text" id="nom" name="nom" value="{{ fournisseur.nom|default:'' }}" required>
+    </div>
+    <div class="form-group">
+      <label for="contact">Contact</label>
+      <input type="text" id="contact" name="contact" value="{{ fournisseur.contact|default:'' }}">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="telephone">Téléphone</label>
+      <input type="tel" id="telephone" name="telephone" value="{{ fournisseur.telephone|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ fournisseur.email|default:'' }}">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="specialite">Spécialité</label>
+    <input type="text" id="specialite" name="specialite" value="{{ fournisseur.specialite|default:'' }}" placeholder="Domaine de spécialisation">
+  </div>
+
+  <div class="form-group">
+    <label for="adresse">Adresse</label>
+    <textarea id="adresse" name="adresse" rows="2">{{ fournisseur.adresse|default:'' }}</textarea>
+  </div>
+
+  <div class="form-actions">
+    <button class="primary" type="submit">Enregistrer</button>
+    <a href="{% url 'core:fournisseurs' %}" class="secondary">Annuler</a>
+  </div>
+</form>
+{% endblock %}

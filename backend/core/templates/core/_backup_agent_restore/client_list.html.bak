@@ -1,0 +1,107 @@
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Clients{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-user-tie"></i>
+                Tous les Clients
+            </h3>
+            <div class="section-actions">
+                <input type="text" id="clients-search" placeholder="Rechercher par nom, contact..." class="search-input">
+                <a href="{% url 'core:client_new' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Client
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="clients-table">
+                <thead>
+                    <tr>
+                        <th>Nom du Client</th>
+                        <th>Contact Principal</th>
+                        <th>Téléphone</th>
+                        <th>Email</th>
+                        <th>Adresse</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clients-tbody">
+                    {% for client in clients %}
+                    <tr>
+                        <td>
+                            <div class="client-info">
+                                <strong>{{ client.nom }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-info">
+                                <i class="fas fa-user"></i>
+                                {{ client.contact|default:"Non spécifié" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="phone-info">
+                                {% if client.telephone %}
+                                <i class="fas fa-phone"></i>
+                                <a href="tel:{{ client.telephone }}">{{ client.telephone }}</a>
+                                {% else %}
+                                <span class="no-data">Non spécifié</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="email-info">
+                                {% if client.email %}
+                                <i class="fas fa-envelope"></i>
+                                <a href="mailto:{{ client.email }}">{{ client.email }}</a>
+                                {% else %}
+                                <span class="no-data">Non spécifié</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="address-info">
+                                {% if client.adresse %}
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ client.adresse|truncatechars:30 }}
+                                {% else %}
+                                <span class="no-data">Non spécifiée</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:client_edit' client.pk %}" class="btn-action btn-view" title="Voir/Modifier">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'core:client_edit' client.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-user-tie"></i>
+                                <h4>Aucun client trouvé</h4>
+                                <p>Commencez par ajouter vos premiers clients.</p>
+                                <a href="{% url 'core:client_new' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter un client
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

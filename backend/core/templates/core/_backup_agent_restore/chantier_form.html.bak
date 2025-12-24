@@ -1,0 +1,136 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if chantier %}Modifier{% else %}Nouveau{% endif %} chantier{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-hard-hat"></i>
+                {% if chantier %}Modifier le chantier{% else %}Nouveau chantier{% endif %}
+            </h3>
+            <div class="section-actions">
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <form method="post" class="form-container">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <!-- Informations générales -->
+                <div class="form-section">
+                    <h4 class="form-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informations générales
+                    </h4>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nom">
+                                <i class="fas fa-tag"></i>
+                                Nom du chantier *
+                            </label>
+                            <input type="text" id="nom" name="nom" value="{{ chantier.nom|default:'' }}" required
+                                   placeholder="Ex: Construction Villa Cocody">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="client">
+                                <i class="fas fa-user-tie"></i>
+                                Client *
+                            </label>
+                            <select id="client" name="client" required>
+                                <option value="">Sélectionner un client</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}" {% if chantier and chantier.client.id == client.id %}selected{% endif %}>
+                                        {{ client.nom }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="description" name="description" rows="4"
+                                  placeholder="Description détaillée du chantier...">{{ chantier.description|default:'' }}</textarea>
+                    </div>
+                                <!-- REMOVED BACKUP: chantier_form.html.bak
+                                     Ce fichier backup a été neutralisé par automatisation pour éviter la confusion.
+                                     Emplacement original: core/chantier_form.html
+                                     Si vous avez besoin du contenu original, restaurez depuis le contrôle de version. -->
+
+                                <i class="fas fa-tasks"></i>
+                                Statut
+                            </label>
+                            <select id="statut" name="statut">
+                                <option value="planifie" {% if chantier and chantier.statut == 'planifie' %}selected{% endif %}>📋 Planifié</option>
+                                <option value="en_cours" {% if chantier and chantier.statut == 'en_cours' %}selected{% endif %}>🔄 En cours</option>
+                                <option value="termine" {% if chantier and chantier.statut == 'termine' %}selected{% endif %}>✅ Terminé</option>
+                                <option value="annule" {% if chantier and chantier.statut == 'annule' %}selected{% endif %}>❌ Annulé</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Équipe et avancement -->
+                <div class="form-section">
+                    <h4 class="form-section-title">
+                        <i class="fas fa-users"></i>
+                        Équipe et avancement
+                    </h4>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="avancement">
+                                <i class="fas fa-chart-line"></i>
+                                Avancement (%)
+                            </label>
+                            <div class="progress-input-container">
+                                <input type="range" id="avancement" name="avancement" min="0" max="100"
+                                       value="{{ chantier.avancement|default:0 }}" class="progress-slider">
+                                <span class="progress-value">{{ chantier.avancement|default:0 }}%</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chef_chantier">
+                                <i class="fas fa-user-crown"></i>
+                                Chef de chantier
+                            </label>
+                            <select id="chef_chantier" name="chef_chantier">
+                                <option value="">Non assigné</option>
+                                {% for user in chefs_chantier %}
+                                    <option value="{{ user.id }}" {% if chantier and chantier.chef_chantier and chantier.chef_chantier.id == user.id %}selected{% endif %}>
+                                        {{ user.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% if chantier %}Modifier{% else %}Créer{% endif %} le chantier
+                </button>
+                <a href="{% url 'core:chantiers' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-home"></i>
+                    Retour à l'accueil
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

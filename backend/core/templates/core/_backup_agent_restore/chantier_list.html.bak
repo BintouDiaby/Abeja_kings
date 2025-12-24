@@ -1,0 +1,138 @@
+<!-- REMOVED BACKUP: chantier_list.html.bak
+    Ce fichier backup a été neutralisé par automatisation pour éviter la confusion.
+    Emplacement original: core/chantier_list.html
+    Si vous avez besoin du contenu original, restaurez depuis le contrôle de version. -->
+{% extends 'core/base.html' %}
+{% block title %}Gestion des Chantiers{% endblock %}
+{% block content %}
+<div class="content-area">
+    <div class="content-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-hard-hat"></i>
+                Tous les Chantiers
+            </h3>
+            <div class="section-actions">
+                <div class="search-filters">
+                    <input type="text" id="chantiers-search" placeholder="Rechercher par nom, client..." class="search-input">
+                    <select id="chantiers-statut-filter" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="planifie">Planifié</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="suspendu">Suspendu</option>
+                        <option value="termine">Terminé</option>
+                        <option value="annule">Annulé</option>
+                    </select>
+                </div>
+                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau Chantier
+                </a>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="chantiers-table">
+                <thead>
+                    <tr>
+                        <th>Nom du Chantier</th>
+                        <th>Client</th>
+                        <th>Date Début</th>
+                        <th>Date Fin Prévue</th>
+                        <th>Budget</th>
+                        <th>Avancement</th>
+                        <th>Statut</th>
+                        <th>Chef Chantier</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="chantiers-tbody">
+                    {% for chantier in chantiers %}
+                    <tr data-statut="{{ chantier.statut }}">
+                        <td>
+                            <div class="chantier-info">
+                                <strong>{{ chantier.nom }}</strong>
+                                {% if chantier.description %}
+                                <small class="chantier-description">{{ chantier.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="client-info">
+                                <i class="fas fa-user"></i>
+                                {{ chantier.client.nom|default:"Non assigné" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-start"></i>
+                                {{ chantier.date_debut|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-end"></i>
+                                {{ chantier.date_fin_prevue|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="budget-info">
+                                <strong class="format-number">{{ chantier.budget|default:0|floatformat:0 }}</strong> FCFA
+                            </div>
+                        </td>
+                        <td>
+                            <div class="progress-cell">
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-{{ chantier.pk }}" data-progress="{{ chantier.avancement }}"></div>
+                                </div>
+                                <span class="progress-text">{{ chantier.avancement }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ chantier.statut }}">
+                                {% if chantier.statut == 'planifie' %}📋{% elif chantier.statut == 'en_cours' %}🔄{% elif chantier.statut == 'termine' %}✅{% elif chantier.statut == 'annule' %}❌{% endif %}
+                                {{ chantier.get_statut_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if chantier.chef_chantier %}
+                            <div class="chef-info">
+                                <i class="fas fa-user-crown"></i>
+                                {{ chantier.chef_chantier.get_full_name }}
+                            </div>
+                            {% else %}
+                            <span class="no-assignment">Non assigné</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <i class="fas fa-hard-hat"></i>
+                                <h4>Aucun chantier trouvé</h4>
+                                <p>Commencez par créer votre premier chantier.</p>
+                                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Créer un chantier
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if is_update %}Modifier{% else %}Nouvel{% endif %} utilisateur{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div>
+    <label for="id_username">Nom d'utilisateur:</label>
+    {{ form.username }}
+  </div>
+  {% if not is_update %}
+  <div>
+    <label for="id_password1">Mot de passe:</label>
+    {{ form.password1 }}
+  </div>
+  <div>
+    <label for="id_password2">Confirmer le mot de passe:</label>
+    {{ form.password2 }}
+  </div>
+  {% endif %}
+  <div>
+    <label for="id_first_name">Prénom:</label>
+    <input type="text" name="first_name" id="id_first_name" value="{% if is_update %}{{ form.instance.first_name }}{% endif %}">
+  </div>
+  <div>
+    <label for="id_last_name">Nom:</label>
+    <input type="text" name="last_name" id="id_last_name" value="{% if is_update %}{{ form.instance.last_name }}{% endif %}">
+  </div>
+  <div>
+    <label for="id_email">Email:</label>
+    <input type="email" name="email" id="id_email" value="{% if is_update %}{{ form.instance.email }}{% endif %}">
+  </div>
+  <div>
+    <label for="id_role">Rôle:</label>
+    <select name="role" id="id_role">
+      <option value="ouvrier" {% if profile.role == 'ouvrier' %}selected{% endif %}>Ouvrier</option>
+      <option value="chef" {% if profile.role == 'chef' %}selected{% endif %}>Chef de Chantier</option>
+      <option value="admin" {% if profile.role == 'admin' %}selected{% endif %}>Administrateur</option>
+    </select>
+  </div>
+  <div>
+    <label for="id_telephone">Téléphone:</label>
+    <input type="text" name="telephone" id="id_telephone" value="{% if profile.telephone %}{{ profile.telephone }}{% endif %}">
+  </div>
+  <button class="primary" type="submit">Enregistrer</button>
+  <a href="{% url 'core:users' %}" class="secondary">Annuler</a>
+</form>
+{% endblock %}
