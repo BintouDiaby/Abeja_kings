@@ -27,9 +27,13 @@
   </div>
 
   <div class="form-row">
+    <!-- Rémunération selon rôle -->
     <div class="form-group">
-      <label for="taux_horaire">Taux horaire (FCFA) *</label>
-      <input type="number" id="taux_horaire" name="taux_horaire" step="0.01" value="{{ personnel.taux_horaire|default:'' }}" required>
+      <label id="remu-label" for="remu-input">Rémunération *</label>
+      <!-- Taux journalier pour ouvrier/maître/apprenti -->
+      <input type="number" id="taux_journalier" name="taux_journalier" step="0.01" value="{{ personnel.taux_journalier|default:'' }}" placeholder="FCFA/jour">
+      <!-- Salaire mensuel pour chef de chantier -->
+      <input type="number" id="salaire_mensuel" name="salaire_mensuel" step="0.01" value="{{ personnel.salaire_mensuel|default:'' }}" placeholder="FCFA/mois" style="display:none">
     </div>
     <div class="form-group">
       <label for="date_embauche">Date d'embauche *</label>
@@ -58,6 +62,59 @@
     <textarea id="adresse" name="adresse" rows="2">{{ personnel.adresse|default:'' }}</textarea>
   </div>
 
+  <!-- Champs spécifiques selon le rôle -->
+  <div class="role-specific">
+    <h4>Champs spécifiques</h4>
+
+    <!-- Ouvrier -->
+    <div class="role-section" data-role="ouvrier">
+      <div class="form-group">
+        <label for="metier">Métier</label>
+        <input type="text" id="metier" name="metier" value="{{ personnel.metier|default:'' }}" placeholder="Ex: maçon, soudeur, carreleur">
+      </div>
+    </div>
+
+    <!-- Maître ouvrier -->
+    <div class="role-section" data-role="maitre_ouvrier">
+      <div class="form-group">
+        <label for="specialite">Spécialité</label>
+        <input type="text" id="specialite" name="specialite" value="{{ personnel.specialite|default:'' }}" placeholder="Ex: charpente, plomberie">
+      </div>
+      <div class="form-group">
+        <label for="metier_mo">Métier</label>
+        <input type="text" id="metier_mo" name="metier" value="{{ personnel.metier|default:'' }}" placeholder="Métier principal">
+      </div>
+    </div>
+
+    <!-- Chef de chantier -->
+    <div class="role-section" data-role="chef_chantier">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="zone">Zone d'intervention</label>
+          <input type="text" id="zone" name="zone" value="{{ personnel.zone|default:'' }}" placeholder="Ex: Abidjan, Yopougon">
+        </div>
+        <div class="form-group">
+          <label for="prime_responsabilite">Prime de responsabilité (FCFA)</label>
+          <input type="number" step="0.01" id="prime_responsabilite" name="prime_responsabilite" value="{{ personnel.prime_responsabilite|default:'' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Apprenti -->
+    <div class="role-section" data-role="apprenti">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tuteur">Tuteur</label>
+          <input type="text" id="tuteur" name="tuteur" value="{{ personnel.tuteur|default:'' }}" placeholder="Nom du tuteur">
+        </div>
+        <div class="form-group">
+          <label for="formation">Formation</label>
+          <input type="text" id="formation" name="formation" value="{{ personnel.formation|default:'' }}" placeholder="Ex: maçonnerie, peinture">
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="form-group">
     <label class="checkbox-label">
       <input type="checkbox" id="est_actif" name="est_actif" {% if personnel and personnel.est_actif %}checked{% elif not personnel %}checked{% endif %}>
@@ -70,4 +127,46 @@
     <a href="{% url 'core:personnel' %}" class="secondary">Annuler</a>
   </div>
 </form>
+<script>
+  // Afficher les champs spécifiques selon le rôle sélectionné
+  document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const sections = Array.from(document.querySelectorAll('.role-section'));
+    const tauxInput = document.getElementById('taux_journalier');
+    const salaireInput = document.getElementById('salaire_mensuel');
+    const remuLabel = document.getElementById('remu-label');
+
+    function updateSections() {
+      const role = roleSelect.value;
+      sections.forEach(sec => {
+        sec.style.display = (sec.getAttribute('data-role') === role) ? '' : 'none';
+      });
+      // Toggle rémunération input et label
+      if (role === 'chef_chantier') {
+        remuLabel.textContent = "Salaire mensuel (FCFA) *";
+        salaireInput.style.display = '';
+        tauxInput.style.display = 'none';
+        salaireInput.required = true;
+        tauxInput.required = false;
+      } else {
+        remuLabel.textContent = "Taux journalier (FCFA) *";
+        salaireInput.style.display = 'none';
+        tauxInput.style.display = '';
+        tauxInput.required = true;
+        salaireInput.required = false;
+      }
+    }
+
+    roleSelect.addEventListener('change', updateSections);
+    updateSections();
+  });
+</script>
+<style>
+  .role-specific { margin-top: 16px; }
+  .role-specific h4 { margin: 8px 0 12px; color: var(--secondary); }
+  .role-section { display: none; }
+  .form-row { display: flex; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  @media (max-width: 768px){ .form-row { flex-direction: column; } }
+</style>
 {% endblock %}

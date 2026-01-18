@@ -55,9 +55,26 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS(f'Utilisateur admin_user créé'))
 
+        # Créer un comptable
+        if not User.objects.filter(username='comptable').exists():
+            user = User.objects.create_user(
+                username='comptable',
+                email='comptable@abeja.kings',
+                password='password123',
+                first_name='Compta',
+                last_name='User'
+            )
+            UserProfile.objects.create(
+                user=user,
+                role='comptable',
+                telephone='+225 22 22 22 22'
+            )
+            self.stdout.write(self.style.SUCCESS(f'Utilisateur comptable créé'))
+
         self.stdout.write(self.style.SUCCESS('Utilisateurs de test créés avec succès!'))
         self.stdout.write('Comptes de test:')
         self.stdout.write('  admin: admin@abeja.kings / (mot de passe défini lors de createsuperuser)')
         self.stdout.write('  chef: chef@abeja.kings / password123')
         self.stdout.write('  ouvrier: ouvrier@abeja.kings / password123')
         self.stdout.write('  admin_user: admin_user@abeja.kings / password123')
+        self.stdout.write('  comptable: comptable@abeja.kings / password123')

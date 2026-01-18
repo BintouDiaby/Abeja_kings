@@ -1,10 +1,55 @@
 {% extends 'core/base.html' %}
 {% block title %}Nouveau client{% endblock %}
+
+{% block extrastyle %}
+<style>
+.nice-form-card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 10px 30px rgba(15,23,42,0.06);max-width:920px;margin:8px 0}
+.nice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.nice-form-row{margin-bottom:12px}
+.nice-form-label{display:block;font-weight:700;color:#0f172a;margin-bottom:6px}
+.nice-input, textarea, select{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;background:#fbfdff;font-size:0.98rem}
+.btn-primary{background:linear-gradient(90deg,#5b6ff0,#8b5cf6);color:#fff;padding:10px 16px;border-radius:10px;border:none;font-weight:700}
+.btn-secondary{background:transparent;border:1px solid #e6e9ef;padding:9px 14px;border-radius:10px;color:#374151}
+.recent-panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:14px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);max-width:360px}
+.recent-item{padding:8px;border-bottom:1px dashed rgba(15,23,42,0.04);}
+</style>
+{% endblock %}
+
 {% block content %}
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="primary" type="submit">Enregistrer</button>
-  <a href="{% url 'core:clients' %}" class="secondary">Annuler</a>
-</form>
+<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+  <div class="nice-form-card" style="flex:1">
+    <form method="post" id="client-form">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        {{ form.nom }}
+        {{ form.contact }}
+      </div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        {{ form.telephone }}
+        {{ form.email }}
+      </div>
+      <div style="margin-top:8px">{{ form.adresse }}</div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button class="btn-primary" type="submit">Enregistrer</button>
+        <a href="{% url 'core:clients' %}" class="btn-secondary">Annuler</a>
+      </div>
+    </form>
+  </div>
+
+  <aside class="recent-panel">
+    <h3 style="margin:0 0 8px 0">Clients récents</h3>
+    <div id="recent-clients">Chargement…</div>
+  </aside>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  fetch('{% url "core:api_clients" %}').then(r=>r.json()).then(data=>{
+    const c=document.getElementById('recent-clients'); c.innerHTML=''; (data.clients||[]).slice(0,6).forEach(cl=>{ const el=document.createElement('div'); el.className='recent-item'; el.innerHTML=`<strong>${cl.nom}</strong><div style="color:#666">${cl.telephone||''}${cl.email?'<br/>'+cl.email:''}</div>`; c.appendChild(el); }); if((data.clients||[]).length===0) c.innerText='Aucun client';
+  }).catch(()=>{ document.getElementById('recent-clients').innerText='Erreur de chargement'; });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

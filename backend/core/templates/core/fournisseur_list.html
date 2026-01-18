@@ -5,7 +5,7 @@
     <div class="content-section">
         <div class="section-header">
             <h3>
-                <i class="fas fa-truck"></i>
+                <i class="fa-solid fa-truck" aria-hidden="true"></i>
                 Tous les Fournisseurs
             </h3>
             <div class="section-actions">
@@ -24,10 +24,10 @@
                     </select>
                 </div>
                 <a href="{% url 'core:fournisseur_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouveau Fournisseur
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Nouveau Fournisseur
                 </a>
                 <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
-                    <i class="fas fa-home"></i> Retour à l'accueil
+                    <i class="fa-solid fa-home" aria-hidden="true"></i> Retour à l'accueil
                 </a>
             </div>
         </div>
@@ -59,7 +59,7 @@
                             <div class="contact-info">
                                 {% if fournisseur.contact %}
                                 <div class="contact-name">
-                                    <i class="fas fa-user"></i>
+                                    <i class="fa-solid fa-user" aria-hidden="true"></i>
                                     {{ fournisseur.contact }}
                                 </div>
                                 {% else %}
@@ -71,13 +71,13 @@
                             <div class="coordonnees">
                                 {% if fournisseur.telephone %}
                                 <div class="phone-link">
-                                    <i class="fas fa-phone"></i>
+                                    <i class="fa-solid fa-phone" aria-hidden="true"></i>
                                     <a href="tel:{{ fournisseur.telephone }}">{{ fournisseur.telephone }}</a>
                                 </div>
                                 {% endif %}
                                 {% if fournisseur.email %}
                                 <div class="email-link">
-                                    <i class="fas fa-envelope"></i>
+                                    <i class="fa-solid fa-envelope" aria-hidden="true"></i>
                                     <a href="mailto:{{ fournisseur.email }}">{{ fournisseur.email }}</a>
                                 </div>
                                 {% endif %}
@@ -94,7 +94,7 @@
                         </td>
                         <td>
                             <span class="status-badge status-active">
-                                <i class="fas fa-circle"></i>
+                                <i class="fa-solid fa-circle" aria-hidden="true"></i>
                                 Actif
                             </span>
                         </td>
@@ -103,6 +103,9 @@
                                 <a href="{% url 'core:fournisseur_update' fournisseur.pk %}" class="btn-action btn-edit" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                <button class="btn-action btn-delete" data-pk="{{ fournisseur.pk }}" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -382,6 +385,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('input', filterFournisseurs);
     specialiteFilter.addEventListener('change', filterFournisseurs);
+});
+</script>
+<script>
+// Delete handler for fournisseurs
+document.addEventListener('DOMContentLoaded', function(){
+    function getCookie(name) {
+        let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+        return v ? v[2] : null;
+    }
+
+    document.querySelectorAll('.btn-delete').forEach(btn=>{
+        btn.addEventListener('click', function(e){
+            const pk = this.dataset.pk;
+            if(!confirm('Supprimer ce fournisseur ?')) return;
+            fetch('{% url "core:fournisseur_delete" 0 %}'.replace('/0/', '/' + pk + '/'), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin'
+            }).then(r=>r.json()).then(json=>{
+                if(json && json.ok){
+                    // remove row
+                    const row = btn.closest('tr'); if(row) row.remove();
+                } else {
+                    alert('Erreur suppression: ' + (json && json.error ? json.error : 'Échec'));
+                }
+            }).catch(()=>{ alert('Erreur réseau lors de la suppression'); });
+        });
+    });
 });
 </script>
 {% endblock %}

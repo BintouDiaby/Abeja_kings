@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+{% block title %}Historique Paiements Personnel{% endblock %}
+{% block content %}
+<div class="content-area">
+  <h2>Paiement du personnel</h2>
+  <form method="get" style="display:flex;gap:12px;align-items:end;margin-bottom:14px">
+    <div>
+      <label>Mois</label>
+      <input type="month" name="month" value="{{ filters.month }}">
+    </div>
+    <div>
+      <label>Chantier</label>
+      <select name="chantier">
+        <option value="">Tous</option>
+        {% for c in chantiers %}
+        <option value="{{ c.id }}" {% if filters.chantier == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button class="btn btn-primary" type="submit">Filtrer</button>
+      <a class="btn btn-outline" href="?{% if filters.month %}month={{ filters.month }}&{% endif %}{% if filters.chantier %}chantier={{ filters.chantier }}&{% endif %}export=csv">Export CSV</a>
+    </div>
+  </form>
+
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employé</th>
+          <th>Poste</th>
+          <th>Chantier</th>
+          <th>Net (FCFA)</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.personnel.user.get_full_name }}</td>
+          <td>{{ r.personnel.get_role_display }}</td>
+          <td>{{ r.personnel.chantier_actuel.nom|default:"-" }}</td>
+          <td>{{ r.expected|floatformat:0 }}</td>
+          <td>{% if r.status == 'Payé' %}🟢 Payé{% else %}⏳ En attente{% endif %}</td>
+          <td>
+            <a class="btn btn-outline" href="{% url 'core:personnel_payments' personnel_id=r.personnel.pk %}?periode={{ filters.month }}">Ouvrir / Payer</a>
+            {% if r.status != 'Payé' %}
+            <form method="post" action="{% url 'core:personnel_mark_paid' personnel_id=r.personnel.pk %}" style="display:inline;margin-left:8px" onsubmit="return confirm('Confirmer le paiement de {{ r.expected|floatformat:0 }} FCFA à {{ r.personnel.user.get_full_name }} ?')">
+              {% csrf_token %}
+              <input type="hidden" name="periode" value="{{ filters.month }}">
+              <input type="hidden" name="chantier" value="{{ filters.chantier }}">
+              <button class="btn btn-primary" type="submit">Marquer comme payé</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Aucun employé trouvé pour ce filtre</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

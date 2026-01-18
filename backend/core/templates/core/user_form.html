@@ -1,47 +1,90 @@
 {% extends 'core/base.html' %}
 {% block title %}{% if is_update %}Modifier{% else %}Nouvel{% endif %} utilisateur{% endblock %}
+
+{% block extrastyle %}
+<style>
+.nice-form-card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 10px 30px rgba(15,23,42,0.06);max-width:920px;margin:8px 0}
+.nice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.nice-form-row{margin-bottom:12px}
+.nice-form-label{display:block;font-weight:700;color:#0f172a;margin-bottom:6px}
+.nice-input, textarea, select{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;background:#fbfdff;font-size:0.98rem}
+.btn-primary{background:linear-gradient(90deg,#5b6ff0,#8b5cf6);color:#fff;padding:10px 16px;border-radius:10px;border:none;font-weight:700}
+.btn-secondary{background:transparent;border:1px solid #e6e9ef;padding:9px 14px;border-radius:10px;color:#374151}
+.recent-panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:14px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);max-width:360px}
+.recent-item{padding:8px;border-bottom:1px dashed rgba(15,23,42,0.04);}
+</style>
+{% endblock %}
+
 {% block content %}
-<form method="post">
-  {% csrf_token %}
-  <div>
-    <label for="id_username">Nom d'utilisateur:</label>
-    {{ form.username }}
+<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+  <div class="nice-form-card" style="flex:1">
+    <form method="post" id="user-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="errorlist" style="color:#d32f2f; margin-bottom:12px;">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="nice-form-label" for="id_username">Nom d'utilisateur</label>
+          {{ form.username }}
+        </div>
+        {% if not is_update %}
+        <div>
+          <label class="nice-form-label" for="id_password1">Mot de passe</label>
+          {{ form.password1 }}
+        </div>
+        {% endif %}
+      </div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="nice-form-label">Prénom</label>
+          <input class="nice-input" type="text" name="first_name" id="id_first_name" value="{% if is_update %}{{ form.instance.first_name }}{% endif %}">
+        </div>
+        <div>
+          <label class="nice-form-label">Nom</label>
+          <input class="nice-input" type="text" name="last_name" id="id_last_name" value="{% if is_update %}{{ form.instance.last_name }}{% endif %}">
+        </div>
+      </div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="nice-form-label">Email</label>
+          <input class="nice-input" type="email" name="email" id="id_email" value="{% if is_update %}{{ form.instance.email }}{% endif %}">
+        </div>
+        <div>
+          <label class="nice-form-label">Rôle</label>
+          <select class="nice-input" name="role" id="id_role">
+            <option value="ouvrier" {% if profile.role == 'ouvrier' %}selected{% endif %}>Ouvrier</option>
+            <option value="chef" {% if profile.role == 'chef' %}selected{% endif %}>Chef de Chantier</option>
+            <option value="admin" {% if profile.role == 'admin' %}selected{% endif %}>Administrateur</option>
+            <option value="comptable" {% if profile.role == 'comptable' %}selected{% endif %}>Comptable</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label class="nice-form-label">Téléphone</label>
+        <input class="nice-input" type="text" name="telephone" id="id_telephone" value="{% if profile.telephone %}{{ profile.telephone }}{% endif %}">
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button class="btn-primary" type="submit">Enregistrer</button>
+        <a href="{% url 'core:users' %}" class="btn-secondary">Annuler</a>
+      </div>
+    </form>
   </div>
-  {% if not is_update %}
-  <div>
-    <label for="id_password1">Mot de passe:</label>
-    {{ form.password1 }}
-  </div>
-  <div>
-    <label for="id_password2">Confirmer le mot de passe:</label>
-    {{ form.password2 }}
-  </div>
-  {% endif %}
-  <div>
-    <label for="id_first_name">Prénom:</label>
-    <input type="text" name="first_name" id="id_first_name" value="{% if is_update %}{{ form.instance.first_name }}{% endif %}">
-  </div>
-  <div>
-    <label for="id_last_name">Nom:</label>
-    <input type="text" name="last_name" id="id_last_name" value="{% if is_update %}{{ form.instance.last_name }}{% endif %}">
-  </div>
-  <div>
-    <label for="id_email">Email:</label>
-    <input type="email" name="email" id="id_email" value="{% if is_update %}{{ form.instance.email }}{% endif %}">
-  </div>
-  <div>
-    <label for="id_role">Rôle:</label>
-    <select name="role" id="id_role">
-      <option value="ouvrier" {% if profile.role == 'ouvrier' %}selected{% endif %}>Ouvrier</option>
-      <option value="chef" {% if profile.role == 'chef' %}selected{% endif %}>Chef de Chantier</option>
-      <option value="admin" {% if profile.role == 'admin' %}selected{% endif %}>Administrateur</option>
-    </select>
-  </div>
-  <div>
-    <label for="id_telephone">Téléphone:</label>
-    <input type="text" name="telephone" id="id_telephone" value="{% if profile.telephone %}{{ profile.telephone }}{% endif %}">
-  </div>
-  <button class="primary" type="submit">Enregistrer</button>
-  <a href="{% url 'core:users' %}" class="secondary">Annuler</a>
-</form>
+
+  <aside class="recent-panel">
+    <h3 style="margin:0 0 8px 0">Personnel récent</h3>
+    <div id="recent-personnel">Chargement…</div>
+  </aside>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  fetch('{% url "core:api_personnel" %}').then(r=>r.json()).then(data=>{
+    const c=document.getElementById('recent-personnel'); c.innerHTML=''; (data.personnel||[]).slice(0,6).forEach(p=>{ const el=document.createElement('div'); el.className='recent-item'; el.innerHTML=`<strong>${p.user.username}</strong><div style="color:#666">${p.user.full_name||''} • ${p.role_display}</div>`; c.appendChild(el); }); if((data.personnel||[]).length===0) c.innerText='Aucun personnel';
+  }).catch(()=>{ document.getElementById('recent-personnel').innerText='Erreur de chargement'; });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

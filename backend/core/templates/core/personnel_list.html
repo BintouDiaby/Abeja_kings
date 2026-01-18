@@ -5,8 +5,8 @@
     <div class="content-section">
         <div class="section-header">
             <h3>
-                <i class="fas fa-users"></i>
-                Tout le Personnel
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                Gestion du Personnel
             </h3>
             <div class="section-actions">
                 <div class="search-filters">
@@ -19,17 +19,34 @@
                     <select id="personnel-role-filter" class="filter-select">
                         <option value="">Tous les rôles</option>
                         <option value="ouvrier">Ouvrier</option>
-                        <option value="chef">Chef de chantier</option>
-                        <option value="technicien">Technicien</option>
+                        <option value="maitre_ouvrier">Maître ouvrier</option>
+                        <option value="chef_chantier">Chef de chantier</option>
+                        <option value="apprenti">Apprenti</option>
                     </select>
                 </div>
                 <a href="{% url 'core:personnel_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouveau Personnel
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Nouveau Personnel
+                </a>
+                <a href="{% url 'core:personnel_payments_history' %}" class="btn btn-outline">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                    Historique paiements
                 </a>
                 <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
-                    <i class="fas fa-home"></i> Retour à l'accueil
+                    <i class="fa-solid fa-home" aria-hidden="true"></i> Retour à l'accueil
                 </a>
             </div>
+        </div>
+
+        <!-- Onglets de segmentation par rôle (filtrage côté serveur) -->
+        <div class="role-tabs">
+            <a href="{% url 'core:personnel' %}" class="tab {% if active_role == 'tous' %}active{% endif %}">Tous <span class="count">({{ counts.total }})</span></a>
+            <a href="{% url 'core:personnel_role' 'ouvrier' %}" class="tab {% if active_role == 'ouvrier' %}active{% endif %}">Ouvriers <span class="count">({{ counts.ouvrier }})</span></a>
+            <a href="{% url 'core:personnel_role' 'maitre_ouvrier' %}" class="tab {% if active_role == 'maitre_ouvrier' %}active{% endif %}">Maîtres ouvriers <span class="count">({{ counts.maitre_ouvrier }})</span></a>
+            <a href="{% url 'core:personnel_role' 'chef_chantier' %}" class="tab {% if active_role == 'chef_chantier' %}active{% endif %}">Chefs de chantier <span class="count">({{ counts.chef_chantier }})</span></a>
+            <a href="{% url 'core:personnel_role' 'apprenti' %}" class="tab {% if active_role == 'apprenti' %}active{% endif %}">Apprentis <span class="count">({{ counts.apprenti }})</span></a>
         </div>
 
         <div class="table-container">
@@ -38,7 +55,7 @@
                     <tr>
                         <th>Employé</th>
                         <th>Rôle</th>
-                        <th>Taux Horaire</th>
+                        <th>Rémunération</th>
                         <th>Contact</th>
                         <th>Chantier Actuel</th>
                         <th>Statut</th>
@@ -61,25 +78,29 @@
                         </td>
                         <td>
                             <span class="role-badge role-{{ personne.role }}">
-                                {% if personne.role == 'chef' %}👑{% elif personne.role == 'technicien' %}🔧{% else %}👷{% endif %}
+                                {% if personne.role == 'chef_chantier' %}👑{% elif personne.role == 'maitre_ouvrier' %}🔧{% elif personne.role == 'apprenti' %}🌱{% else %}👷{% endif %}
                                 {{ personne.get_role_display }}
                             </span>
                         </td>
                         <td>
                             <div class="salary-info">
-                                <strong>{{ personne.taux_horaire|floatformat:0 }} FCFA/h</strong>
+                                {% if personne.role == 'chef_chantier' %}
+                                    <strong>{{ personne.salaire_mensuel|default:"0"|floatformat:0 }} FCFA/mois</strong>
+                                {% else %}
+                                    <strong>{{ personne.taux_journalier|default:"0"|floatformat:0 }} FCFA/jour</strong>
+                                {% endif %}
                             </div>
                         </td>
                         <td>
                             <div class="contact-info">
                                 {% if personne.telephone %}
                                 <div class="phone-info">
-                                    <i class="fas fa-phone"></i>
+                                    <i class="fa-solid fa-phone" aria-hidden="true"></i>
                                     <a href="tel:{{ personne.telephone }}">{{ personne.telephone }}</a>
                                 </div>
                                 {% endif %}
                                 <div class="address-info">
-                                    <i class="fas fa-map-marker-alt"></i>
+                                    <i class="fa-solid fa-map-marker-alt" aria-hidden="true"></i>
                                     {{ personne.adresse|truncatechars:25|default:"Non spécifiée" }}
                                 </div>
                             </div>
@@ -87,7 +108,7 @@
                         <td>
                             {% if personne.chantier_actuel %}
                             <div class="chantier-info">
-                                <i class="fas fa-hard-hat"></i>
+                                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
                                 <span>{{ personne.chantier_actuel.nom }}</span>
                             </div>
                             {% else %}
@@ -102,8 +123,15 @@
                         <td>
                             <div class="action-buttons">
                                 <a href="{% url 'core:personnel_update' personne.pk %}" class="btn-action btn-edit" title="Modifier">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="fa-solid fa-edit" aria-hidden="true"></i>
                                 </a>
+                                                                <a href="{% url 'core:personnel_payments' personnel_id=personne.pk %}" class="btn-action btn-pay" title="Payer" aria-label="Payer">
+                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                                            <path d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                            <rect x="7" y="3" width="10" height="6" rx="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                            <path d="M8 14h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                        </svg>
+                                                                </a>
                             </div>
                         </td>
                     </tr>
@@ -111,11 +139,11 @@
                     <tr class="empty-row">
                         <td colspan="7">
                             <div class="empty-state">
-                                <i class="fas fa-users"></i>
+                                <i class="fa-solid fa-users" aria-hidden="true"></i>
                                 <h4>Aucun personnel trouvé</h4>
                                 <p>Commencez par ajouter vos employés.</p>
                                 <a href="{% url 'core:personnel_create' %}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> Ajouter un employé
+                                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Ajouter un employé
                                 </a>
                             </div>
                         </td>
@@ -163,6 +191,31 @@
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
     outline: none;
+}
+
+/* Onglets de rôle */
+.role-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0 8px;
+    flex-wrap: wrap;
+}
+.role-tabs .tab {
+    padding: 8px 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: 999px;
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    background: var(--light);
+}
+.role-tabs .tab .count { color: var(--gray); }
+.role-tabs .tab:hover { border-color: var(--primary); }
+.role-tabs .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
 }
 
 .employee-info {
@@ -226,6 +279,21 @@
 .role-ouvrier {
     background: rgba(99, 102, 241, 0.1);
     color: #6366F1;
+}
+
+.role-chef_chantier {
+    background: rgba(214, 158, 46, 0.1);
+    color: #B7791F;
+}
+
+.role-maitre_ouvrier {
+    background: rgba(56, 161, 105, 0.1);
+    color: var(--success);
+}
+
+.role-apprenti {
+    background: rgba(99, 102, 241, 0.08);
+    color: #4F46E5;
 }
 
 .salary-info strong {
@@ -310,6 +378,13 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
+}
+
+.btn-pay svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+    display: block;
 }
 
 .btn-edit {

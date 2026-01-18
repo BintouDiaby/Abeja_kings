@@ -2,11 +2,7 @@
 {% load static %}
 
 {% block extrastyle %}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
-
-    <style>
+        <style>
 :root{
   --bg:#f6f8fb;
   --card:#ffffff;
@@ -87,10 +83,41 @@
 .stat-card:hover{transform:translateY(-6px); box-shadow: 0 14px 40px rgba(20,25,55,0.09)}
 
 /* Icon */
-.stat-icon{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted);background:linear-gradient(180deg,#f7f9fc,#f2f4f8)}
-.stat-icon.active{background:linear-gradient(180deg,#16a34a,#4ade80); color:#fff}
-.stat-icon.completed{background:linear-gradient(180deg,#2563eb,#3b82f6); color:#fff}
-.stat-icon.money{background:linear-gradient(180deg,#d97706,#f59e0b); color:#fff}
+.stat-icon{
+    width:74px;
+    height:74px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    color:var(--muted);
+    background:linear-gradient(180deg,#ffffff,#f6f9ff);
+    border-left:6px solid rgba(91,111,240,0.10);
+    box-shadow: 0 10px 30px rgba(16,24,40,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+    position:relative;
+    overflow:visible;
+}
+.stat-icon::before{
+    content:'';
+    position:absolute;
+    right:-28px;
+    bottom:-28px;
+    width:92px;
+    height:92px;
+    border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.06), transparent 40%);
+    filter:blur(6px);
+    pointer-events:none;
+    z-index:0;
+}
+.stat-icon i{font-size:24px;color:inherit;z-index:2}
+.stat-svg{width:26px;height:26px;display:block}
+.stat-svg path,.stat-svg rect,.stat-svg circle{fill:currentColor}
+.stat-icon.active{color:#fff; border-left-color: rgba(16,185,129,0.95); background:linear-gradient(180deg,#10b981,#34d399)}
+.stat-icon.completed{color:#fff; border-left-color: rgba(37,99,235,0.95); background:linear-gradient(180deg,#2563eb,#3b82f6)}
+.stat-icon.money{color:#fff; border-left-color: rgba(217,119,6,0.95); background:linear-gradient(180deg,#d97706,#f59e0b)}
+.stat-icon:hover{transform:translateY(-4px);transition:transform .18s}
 
 .stat-content h3{font-size:1.7rem;margin:0;color:#0f172a;font-weight:700}
 .stat-content p{margin:2px 0 0;color:var(--muted);font-size:0.95rem}
@@ -126,7 +153,7 @@
 .action-card:hover{transform:translateY(-4px); box-shadow:0 12px 30px rgba(20,25,55,0.08); background:linear-gradient(90deg, rgba(91,111,240,0.12), rgba(139,92,246,0.10));}
 
 /* Make stat cards clickable (no visual change required) */
-.stat-link{display:block;color:inherit;text-decoration:none}
+.stat-link{display:block;color:inherit;text-decoration:none;cursor:pointer}
 
 /* Responsive */
 @media (max-width:1000px){.stats-grid{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}}
@@ -142,7 +169,7 @@
         <header class="dashboard-header">
             <div class="header-left">
                 <div class="logo-inline">
-                    <i class="fas fa-crown" aria-hidden="true"></i>
+                    <i class="fa-solid fa-crown" aria-hidden="true"></i>
                     <span class="site-name">Abeja Kings</span>
                 </div>
             </div>
@@ -150,153 +177,265 @@
             <div class="header-center">
                 <h1 class="page-title">Tableau de Bord</h1>
             </div>
-
-            <div class="header-right">
-                <a href="{% url 'core:chantier_create' %}" class="btn btn-primary header-btn" title="Nouveau chantier">
-                    <i class="fas fa-plus" aria-hidden="true"></i>
-                </a>
-
-                <div class="user-block" style="display:flex;align-items:center;gap:10px">
-                    <div class="user-avatar" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--accent-1);color:#fff;font-weight:700">{{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}</div>
-                    <div class="user-info" style="display:flex;flex-direction:column">
-                        <div class="user-name" style="font-weight:700">{{ request.user.get_full_name|default:request.user.username }}</div>
-                        <div class="user-role small muted">{% if request.user.userprofile %}{{ request.user.userprofile.get_role_display }}{% endif %}</div>
-                    </div>
-                    <form method="post" action="{% url 'logout' %}" class="logout-form" style="margin-left:8px">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline small">Se déconnecter</button>
-                    </form>
+            <div class="header-right" style="display:flex;align-items:center;gap:12px">
+                <div style="display:flex;flex-direction:column;align-items:flex-end">
+                    <small style="color:var(--muted);font-size:0.85rem">Connecté en tant que</small>
+                    <strong style="font-size:0.95rem">{{ request.user.get_full_name|default:request.user.username }}</strong>
+                    <span style="font-size:0.8rem;color:var(--muted);">{{ request.user.userprofile.role|capfirst }}</span>
                 </div>
             </div>
         </header>
 
+        
+
         <!-- Statistics Cards -->
         <div class="stats-grid">
-            <a href="{% url 'core:chantiers' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-building"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_chantiers }}</h3>
-                    <p>Total Chantiers</p>
-                </div>
-            </div>
-            </a>
+            {% if role == 'comptable' %}
+                <a href="{% url 'core:factures' %}" class="stat-link">
+                    <div class="stat-card">
+                        <div class="stat-icon money">
+                            <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="8" />
+                                <path d="M11 8h2v1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2v1h-2v-1a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2V8z" fill="#fff" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            {% if show_finances %}
+                                <h3>{{ montant_factures_mois|floatformat:0 }} FCFA</h3>
+                                <p>Factures (ce mois)</p>
+                            {% else %}
+                                <h3>—</h3>
+                                <p>Accès restreint</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
 
-            <a href="{% url 'core:chantiers' %}?statut=en_cours" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon active">
-                    <i class="fas fa-play-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ chantiers_actifs }}</h3>
-                    <p>Chantiers Actifs</p>
-                </div>
-            </div>
-            </a>
+                <a href="{% url 'core:materiaux' %}" class="stat-link">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21 8l-9-5-9 5v8l9 5 9-5V8zm-9-3.2L18.6 8 12 11.2 5.4 8 12 4.8zM4 9.9l7 3.1v6.9L4 16V9.9zM13 20v-6.9l7-3.1V16l-7 4z" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ total_materiaux }}</h3>
+                            <p>Matériaux</p>
+                            {% if materiaux_rupture > 0 %}
+                            <small class="warning">{{ materiaux_rupture }} en rupture</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
 
-            <a href="{% url 'core:chantiers' %}?statut=termine" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon completed">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ chantiers_termines }}</h3>
-                    <p>Chantiers Terminés</p>
-                </div>
-            </div>
-            </a>
+                <a href="{% url 'core:fournisseurs' %}" class="stat-link">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 6h13v7h3l3 3V6l-3-3H3v3zM6 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm10 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ total_fournisseurs }}</h3>
+                            <p>Fournisseurs</p>
+                        </div>
+                    </div>
+                </a>
 
-            <a href="{% url 'core:personnel' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
+                <a href="{% url 'core:personnel' %}" class="stat-link">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 18a6 6 0 0 1 12 0H6z" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ total_personnel }}</h3>
+                            <p>Personnel Actif</p>
+                        </div>
+                    </div>
+                </a>
+            {% else %}
+                <a href="{% url 'core:chantiers' %}?statut=en_cours" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon active">
+                                                <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M4 3v18h1V13h8l3 3V3l-3 3H5V3z" />
+                                                </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ chantiers_actifs }}</h3>
+                        <p>Chantiers Actifs</p>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3>{{ total_personnel }}</h3>
-                    <p>Personnel Actif</p>
-                </div>
-            </div>
-            </a>
+                </a>
 
-            <a href="{% url 'core:materiaux' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-boxes"></i>
+                <a href="{% url 'core:chantiers' %}?statut=termine" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon completed">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14l-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ chantiers_termines }}</h3>
+                        <p>Chantiers Terminés</p>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3>{{ total_materiaux }}</h3>
-                    <p>Matériaux</p>
-                    {% if materiaux_rupture > 0 %}
-                    <small class="warning">{{ materiaux_rupture }} en rupture</small>
-                    {% endif %}
-                </div>
-            </div>
-            </a>
+                </a>
 
-            <a href="{% url 'core:clients' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-user-friends"></i>
+                {# Personnel: lien vers la liste des ouvriers (filtrée) pour tous les rôles #}
+                <a href="{% url 'core:personnel_role' 'ouvrier' %}" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M12 2l3 4 3 2-2 3-4-1-4 1-2-3 3-2 3-4zM8.5 13.5l3.5 1 3.5-1 1 6H7.5l1-6z" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ total_personnel }}</h3>
+                        <p>Personnel Actif</p>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3>{{ total_clients }}</h3>
-                    <p>Clients</p>
-                </div>
-            </div>
-            </a>
+                </a>
 
-            <a href="{% url 'core:fournisseurs' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-truck"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_fournisseurs }}</h3>
-                    <p>Fournisseurs</p>
-                </div>
-            </div>
-            </a>
+                {% comment %} continue the original grid for non-comptable users {% endcomment %}
 
-            <a href="{% url 'core:factures' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon money">
-                    <i class="fas fa-euro-sign"></i>
+                <a href="{% url 'core:materiaux' %}" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M21 8l-9-5-9 5v8l9 5 9-5V8zm-9-3.2L18.6 8 12 11.2 5.4 8 12 4.8zM4 9.9l7 3.1v6.9L4 16V9.9zM13 20v-6.9l7-3.1V16l-7 4z" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ total_materiaux }}</h3>
+                        <p>Matériaux</p>
+                        {% if materiaux_rupture > 0 %}
+                        <small class="warning">{{ materiaux_rupture }} en rupture</small>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="stat-content">
-                    {% if show_finances %}
-                        <h3>{{ montant_factures_mois|floatformat:0 }}€</h3>
-                        <p>Factures (ce mois)</p>
-                    {% else %}
-                        <h3>—</h3>
-                        <p>Accès restreint</p>
-                    {% endif %}
-                </div>
-            </div>
-            </a>
+                </a>
 
-            {# Rapports stat card #}
-            <a href="{% url 'core:rapports' %}" class="stat-link">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-file-alt"></i>
+                <a href="{% url 'core:clients' %}" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4zm8 0c-.3 0-.6 0-1 .1 1.4.9 2 2 2 3.9v1h6v-1c0-2.7-5.3-4-7-4z" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ total_clients }}</h3>
+                        <p>Clients</p>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3>{{ rapports_count }}</h3>
-                    <p>Rapports</p>
+                </a>
+
+                {# Rendre la carte Fournisseurs cliquable pour tous les rôles. #}
+                <a href="{% url 'core:fournisseurs' %}" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M3 6h13v7h3l3 3V6l-3-3H3v3zM6 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm10 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ total_fournisseurs }}</h3>
+                        <p>Fournisseurs</p>
+                    </div>
                 </div>
-            </div>
-            </a>
+                </a>
+
+                {% if role != 'chef' %}
+                <a href="{% url 'core:factures' %}" class="stat-link">
+                <div class="stat-card">
+                    <div class="stat-icon money">
+                                                <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="8" />
+                                                    <path d="M11 8h2v1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2v1h-2v-1a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2V8z" fill="#fff" />
+                                                </svg>
+                    </div>
+                    <div class="stat-content">
+                        {% if show_finances %}
+                            <h3>{{ montant_factures_mois|floatformat:0 }} FCFA</h3>
+                            <p>Factures (ce mois)</p>
+                        {% else %}
+                            <h3>—</h3>
+                            <p>Accès restreint</p>
+                        {% endif %}
+                    </div>
+                </div>
+                </a>
+                {% endif %}
+
+                {# Rapports stat card #}
+                <a href="{% url 'core:rapports' %}" class="stat-link">
+                <div class="stat-card">
+                        <div class="stat-icon">
+                                                        <svg class="stat-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <rect x="3" y="10" width="3" height="11" />
+                                                            <rect x="9" y="6" width="3" height="15" />
+                                                            <rect x="15" y="3" width="3" height="18" />
+                                                        </svg>
+                        </div>
+                    <div class="stat-content">
+                        <h3>{{ rapports_user_count|default:rapports_count }}</h3>
+                        <p>Rapports</p>
+                    </div>
+                </div>
+                </a>
+            {% endif %}
         </div>
 
         <!-- Main Content -->
         <div class="dashboard-content">
             <div class="content-grid">
+                {% if role == 'comptable' %}
+                <!-- Factures en attente (pour comptable) -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-exclamation-circle" aria-hidden="true"></i> Factures en attente</h2>
+                        <div>
+                            <a href="{% url 'core:factures' %}" class="btn-link" title="Voir tout">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        {% if unpaid_factures %}
+                        <div class="recent-list">
+                            {% for facture in unpaid_factures %}
+                            <div class="recent-item">
+                                <div class="item-info">
+                                    <h4>Facture #{{ facture.numero }}</h4>
+                                    <p>{{ facture.client.nom }} • Reste: {{ facture.reste_a_payer|floatformat:0 }} FCFA</p>
+                                </div>
+                                <div class="item-actions">
+                                    <a href="{% url 'core:facture_detail' facture.pk %}" class="btn-sm" title="Ouvrir">
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <svg class="icon-invoice" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4 2h9l6 6v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13 2v7h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 13h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                                <path d="M8 16h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                                <path d="M8 19h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                            </svg>
+                            <p>Aucune facture en attente</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
                 <!-- Recent Projects -->
                 <div class="content-card">
                     <div class="card-header">
-                        <h2><i class="fas fa-clock"></i> Chantiers Récents</h2>
+                        <h2><i class="fa-solid fa-clock" aria-hidden="true"></i> Chantiers Récents</h2>
                         <div>
                             <a href="{% url 'core:chantiers' %}" class="btn-link" title="Voir tout">Voir tout</a>
                             <a href="{% url 'core:chantiers' %}" class="btn-link" title="Gérer les chantiers">Gérer</a>
@@ -314,7 +453,7 @@
                                 <div class="item-actions">
                                     {# Edit link if chantier_update exists #}
                                     <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-sm" title="Modifier">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fa-solid fa-edit" aria-hidden="true"></i>
                                     </a>
                                 </div>
                             </div>
@@ -322,38 +461,37 @@
                         </div>
                         {% else %}
                         <div class="empty-state">
-                            <i class="fas fa-building"></i>
+                            <i class="fa-solid fa-building" aria-hidden="true"></i>
                             <p>Aucun chantier récent</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
-                <!-- Recent Invoices -->
+                <!-- Factures Récentes supprimées pour rôle chef/visibilité générale -->
+                {% if role == 'comptable' %}
+                <!-- Fournisseurs Récents (pour comptable) -->
                 <div class="content-card">
                     <div class="card-header">
-                        <h2><i class="fas fa-file-invoice"></i> Factures Récentes</h2>
+                        <h2><i class="fa-solid fa-truck" aria-hidden="true"></i> Fournisseurs Récents</h2>
                         <div>
-                            <a href="{% url 'core:factures' %}" class="btn-link" title="Voir tout">Voir tout</a>
-                            <a href="{% url 'core:factures' %}" class="btn-link" title="Gérer les factures">Gérer</a>
+                            <a href="{% url 'core:fournisseurs' %}" class="btn-link" title="Voir tout">Voir tout</a>
+                            <a href="{% url 'core:fournisseurs' %}" class="btn-link" title="Gérer">Gérer</a>
                         </div>
                     </div>
                     <div class="card-content">
-                        {% if factures_recentes %}
+                        {% if fournisseurs_recents %}
                         <div class="recent-list">
-                            {% for facture in factures_recentes %}
+                            {% for f in fournisseurs_recents %}
                             <div class="recent-item">
                                 <div class="item-info">
-                                    <h4>Facture #{{ facture.numero }}</h4>
-                                    <p>{{ facture.client.nom }} • {{ facture.montant_total|floatformat:0 }}€</p>
-                                </div>
-                                <div class="item-status">
-                                    <span class="status-badge {{ facture.statut }}">{{ facture.get_statut_display }}</span>
+                                    <h4>{{ f.nom }}</h4>
+                                    <p>{{ f.ville|default:'-' }} • {{ f.telephone|default:'-' }}</p>
                                 </div>
                                 <div class="item-actions">
-                                    {# No individual edit view for facture; link to factures list for management #}
-                                    <a href="{% url 'core:factures' %}" class="btn-sm" title="Gérer la facture">
-                                        <i class="fas fa-edit"></i>
+                                    <a href="{% url 'core:fournisseur_update' f.pk %}" class="btn-sm" title="Modifier">
+                                        <i class="fa-solid fa-edit" aria-hidden="true"></i>
                                     </a>
                                 </div>
                             </div>
@@ -361,17 +499,17 @@
                         </div>
                         {% else %}
                         <div class="empty-state">
-                            <i class="fas fa-file-invoice"></i>
-                            <p>Aucune facture récente</p>
+                            <i class="fa-solid fa-truck" aria-hidden="true"></i>
+                            <p>Aucun fournisseur récent</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
-                
+                {% else %}
                         <!-- Rapports Récents -->
                         <div class="content-card">
                             <div class="card-header">
-                                <h2><i class="fas fa-file-alt"></i> Rapports Récents</h2>
+                                <h2><i class="fa-solid fa-file-alt" aria-hidden="true"></i> Rapports Récents</h2>
                                 <div>
                                     <a href="{% url 'core:rapports' %}" class="btn-link" title="Voir tout">Voir tout</a>
                                     <a href="{% url 'core:rapports' %}" class="btn-link" title="Gérer les rapports">Gérer</a>
@@ -389,7 +527,7 @@
                                         <div class="item-actions">
                                             {# Link to rapports list (no per-rapport edit page) #}
                                             <a href="{% url 'core:rapports' %}" class="btn-sm" title="Voir">
-                                                <i class="fas fa-eye"></i>
+                                                <i class="fa-solid fa-eye" aria-hidden="true"></i>
                                             </a>
                                         </div>
                                     </div>
@@ -397,12 +535,13 @@
                                 </div>
                                 {% else %}
                                 <div class="empty-state">
-                                    <i class="fas fa-file-alt"></i>
+                                    <i class="fa-solid fa-file-alt" aria-hidden="true"></i>
                                     <p>Aucun rapport récent</p>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
+                {% endif %}
             </div>
         </div>
 
@@ -410,6 +549,7 @@
         <div class="quick-actions">
             <h2>Actions Rapides</h2>
             <div class="actions-grid">
+                {% if role == 'admin' or role == 'directeur' or role == 'chef' %}
                 <a href="{% url 'core:chantier_create' %}" class="action-card">
                     <i class="fas fa-plus-circle"></i>
                     <span>Nouveau Chantier</span>
@@ -418,23 +558,31 @@
                     <i class="fas fa-user-plus"></i>
                     <span>Nouveau Client</span>
                 </a>
-                <a href="{% url 'core:facture_new' %}" class="action-card">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Nouvelle Facture</span>
-                </a>
                 <a href="{% url 'core:materiaux' %}" class="action-card">
                     <i class="fas fa-boxes"></i>
                     <span>Gérer Matériaux</span>
                 </a>
-                <a href="{% url 'core:personnel' %}" class="action-card">
-                    <i class="fas fa-users-cog"></i>
-                    <span>Gérer Personnel</span>
-                </a>
                 <a href="{% url 'core:fournisseurs' %}" class="action-card">
-                    <i class="fas fa-truck"></i>
+                    <i class="fas fa-truck-moving"></i>
                     <span>Gérer Fournisseurs</span>
                 </a>
+                {% if role != 'chef' %}
+                <a href="{% url 'core:personnel' %}" class="action-card">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Gérer Personnel</span>
+                </a>
+                {% endif %}
+                {% endif %}
+
+                {% if role == 'admin' or role == 'comptable' %}
+                <a href="{% url 'core:factures' %}" class="action-card">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Gérer Factures</span>
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
 {% endblock %}
+
+{% block extra_js %}{% endblock %}

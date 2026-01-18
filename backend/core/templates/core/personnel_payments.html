@@ -1,0 +1,173 @@
+{% extends 'core/base.html' %}
+{% block title %}Paiements - {{ personnel.user.get_full_name }}{% endblock %}
+{% block content %}
+<div class="content-area">
+  <div class="content-section" style="display:flex;justify-content:center">
+    <div class="payment-card" style="width:100%;max-width:980px;background:#fff;border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(15,23,42,0.08);display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start">
+
+      <!-- Left: main payment form -->
+      <div>
+        <header style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">{{ personnel.user.first_name|first }}{{ personnel.user.last_name|first }}</div>
+            <div>
+              <div style="font-size:16px;font-weight:700">Paiement — {{ personnel.user.get_full_name }}</div>
+              <div style="font-size:13px;color:var(--gray)">{{ personnel.get_role_display }} • {{ chantier.nom|default:'-' }} • <span id="header-periode">{{ periode }}</span></div>
+            </div>
+          </div>
+        </header>
+
+        <form method="post" id="payment-form" class="payment-form">
+          {% csrf_token %}
+          <div style="display:flex;gap:20px;align-items:center;margin-bottom:14px">
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;color:var(--gray);margin-bottom:6px">Montant à payer</label>
+              <div class="amount-display" style="display:flex;align-items:center;gap:12px">
+                <input id="id_montant" name="montant" type="number" step="1" class="amount-input" style="font-size:20px;padding:12px 16px;border-radius:10px;border:1px solid #e6e6e6;width:100%" value="{{ base_salary|floatformat:0 }}">
+                <div style="color:var(--success);font-weight:700;font-size:14px" id="net-small">Net: {{ base_salary|floatformat:0 }} FCFA</div>
+              </div>
+            </div>
+            <div style="width:180px;text-align:right">
+              <button type="button" id="use-net-btn" class="ghost-link" style="display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px">Utiliser le net</button>
+            </div>
+          </div>
+
+          <!-- Payment methods as cards -->
+          <div style="margin-bottom:16px">
+            <label style="font-size:12px;color:var(--gray);display:block;margin-bottom:8px">Mode de paiement</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button type="button" class="method-card active" data-value="espece">💵 Espèces</button>
+              <button type="button" class="method-card" data-value="mobile_money">📱 Mobile Money</button>
+              <button type="button" class="method-card" data-value="virement">🏦 Virement</button>
+              <button type="button" class="method-card" data-value="cheque">🧾 Chèque</button>
+            </div>
+            <input type="hidden" name="mode" id="id_mode" value="espece">
+          </div>
+
+          <!-- Secondary fields grouped -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="flex:1;min-width:160px">
+              <label class="muted">Date</label>
+              {{ form.date }}
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label class="muted">Période</label>
+              {{ form.periode }}
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label class="muted">Référence</label>
+              {{ form.reference }}
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label class="muted">Note (optionnel)</label>
+            {{ form.note }}
+          </div>
+
+          <!-- Validation area -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <label style="display:inline-flex;align-items:center;gap:8px"><input type="checkbox" id="use-net"/> Utiliser le net calculé</label>
+              <div id="computed-net-small" style="color:var(--gray);font-size:13px">Net calculé: <strong id="computed-net">{{ base_salary|floatformat:0 }}</strong> FCFA</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <a href="{% url 'core:personnel' %}" class="btn btn-outline">Annuler</a>
+              <button type="submit" class="confirm-btn" style="background:var(--primary);color:#fff;padding:12px 18px;border-radius:12px;border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px">💰 Confirmer le paiement</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: details & adjustments -->
+      <aside>
+        <div style="background:linear-gradient(180deg,#fff,#fff);padding:12px;border-radius:10px;border:1px solid #f1f1f1">
+          <div style="font-weight:700;margin-bottom:6px">Détails de paie</div>
+          <div style="font-size:13px;color:var(--gray);margin-bottom:8px">Salaire de base</div>
+          <div style="font-size:18px;font-weight:700;color:var(--primary);margin-bottom:12px">{{ base_salary|floatformat:0 }} FCFA</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="font-size:13px;color:var(--gray)">Heures sup. (montant)</label>
+            <input id="heures-supp" type="number" min="0" value="0" style="padding:8px;border-radius:8px;border:1px solid #eee">
+
+            <label style="font-size:13px;color:var(--gray)">Avances</label>
+            <input id="avances" type="number" min="0" value="0" style="padding:8px;border-radius:8px;border:1px solid #eee">
+
+            <label style="font-size:13px;color:var(--gray)">Absences (retenues)</label>
+            <input id="absences" type="number" min="0" value="0" style="padding:8px;border-radius:8px;border:1px solid #eee">
+
+            <div style="margin-top:8px;border-top:1px dashed #eee;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+              <div style="color:var(--gray)">Net à payer</div>
+              <div style="font-weight:800;color:var(--success)" id="net-display">{{ base_salary|floatformat:0 }} FCFA</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Préremplir la période depuis la query string (ex: ?periode=2026-01)
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const periode = params.get('periode') || params.get('month');
+    if(periode){
+      const el = document.querySelector('[name="periode"]') || document.querySelector('#id_periode');
+      if(el){ el.value = periode; }
+    }
+  }catch(e){console && console.error(e)}
+});
+
+// Calcul dynamique du Net et interactions (montant, méthodes)
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    const base = parseFloat('{{ base_salary|floatformat:2 }}') || 0;
+    const heuresEl = document.getElementById('heures-supp');
+    const avancesEl = document.getElementById('avances');
+    const absencesEl = document.getElementById('absences');
+    const netDisplay = document.getElementById('net-display');
+    const computedNet = document.getElementById('computed-net');
+    const montantEl = document.getElementById('id_montant');
+    const useNetCheckbox = document.getElementById('use-net');
+    const useNetBtn = document.getElementById('use-net-btn');
+    const netSmall = document.getElementById('net-small');
+    const methodCards = Array.from(document.querySelectorAll('.method-card'));
+    const modeInput = document.getElementById('id_mode');
+
+    function format(n){ return Number(n).toLocaleString('fr-FR'); }
+
+    function compute(){
+      const hs = parseFloat(heuresEl && heuresEl.value) || 0;
+      const av = parseFloat(avancesEl && avancesEl.value) || 0;
+      const ab = parseFloat(absencesEl && absencesEl.value) || 0;
+      const net = Math.max(0, base + hs - av - ab);
+      if(netDisplay) netDisplay.textContent = format(net) + ' FCFA';
+      if(computedNet) computedNet.textContent = format(net);
+      if(netSmall) netSmall.textContent = 'Net: ' + format(net) + ' FCFA';
+      if(useNetCheckbox && useNetCheckbox.checked && montantEl) montantEl.value = Math.round(net);
+    }
+
+    // method card interactions
+    methodCards.forEach(card => {
+      card.addEventListener('click', function(){
+        methodCards.forEach(c=>c.classList.remove('active'));
+        this.classList.add('active');
+        if(modeInput) modeInput.value = this.dataset.value || '';
+      });
+    });
+
+    if(useNetBtn){ useNetBtn.addEventListener('click', function(){ if(useNetCheckbox) { useNetCheckbox.checked = true; compute(); } }); }
+
+    [heuresEl, avancesEl, absencesEl].forEach(el=> el && el.addEventListener('input', compute));
+    if(useNetCheckbox) useNetCheckbox.addEventListener('change', compute);
+
+    // initial compute
+    compute();
+
+  }catch(e){ console && console.error(e); }
+});
+</script>
+{% endblock %}

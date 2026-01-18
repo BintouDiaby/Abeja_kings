@@ -6,62 +6,119 @@
 
   <div class="form-row">
     <div class="form-group">
-      <label for="nom">Nom du matériau *</label>
-      <input type="text" id="nom" name="nom" value="{{ materiau.nom|default:'' }}" required>
-    </div>
-    <div class="form-group">
-      <label for="categorie">Catégorie *</label>
-      <select id="categorie" name="categorie" required>
-        <option value="construction" {% if materiau and materiau.categorie == 'construction' %}selected{% endif %}>Matériaux de construction</option>
-        <option value="electricite" {% if materiau and materiau.categorie == 'electricite' %}selected{% endif %}>Électricité</option>
-        <option value="plomberie" {% if materiau and materiau.categorie == 'plomberie' %}selected{% endif %}>Plomberie</option>
-        <option value="peinture" {% if materiau and materiau.categorie == 'peinture' %}selected{% endif %}>Peinture</option>
-        <option value="outillage" {% if materiau and materiau.categorie == 'outillage' %}selected{% endif %}>Outillage</option>
-        <option value="autre" {% if materiau and materiau.categorie == 'autre' %}selected{% endif %}>Autre</option>
-      </select>
-    </div>
-  </div>
 
-  <div class="form-group">
-    <label for="description">Description</label>
-    <textarea id="description" name="description" rows="2">{{ materiau.description|default:'' }}</textarea>
-  </div>
+      {% block extrastyle %}
+      <style>
+      /* Reuse nice form styles */
+      .nice-form-card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 10px 30px rgba(15,23,42,0.06);max-width:920px;margin:8px 0}
+      .nice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      .nice-form-row{margin-bottom:12px}
+      .nice-form-label{display:block;font-weight:700;color:#0f172a;margin-bottom:6px}
+      .nice-input, textarea, select{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;background:#fbfdff;font-size:0.98rem}
+      .nice-input:focus, textarea:focus, select:focus{outline:none;border-color:#7c5cff;box-shadow:0 6px 20px rgba(124,92,255,0.06)}
+      .form-actions{display:flex;gap:10px;align-items:center;margin-top:14px}
+      .btn-primary{background:linear-gradient(90deg,#5b6ff0,#8b5cf6);color:#fff;padding:10px 16px;border-radius:10px;border:none;font-weight:700}
+      .btn-secondary{background:transparent;border:1px solid #e6e9ef;padding:9px 14px;border-radius:10px;color:#374151}
+      .recent-panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:14px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);max-width:360px}
+      .recent-item{padding:8px;border-bottom:1px dashed rgba(15,23,42,0.04);}
+      </style>
+      {% endblock %}
 
-  <div class="form-row">
-    <div class="form-group">
-      <label for="unite">Unité</label>
-      <input type="text" id="unite" name="unite" value="{{ materiau.unite|default:'unités' }}" placeholder="unités, kg, m², etc.">
-    </div>
-    <div class="form-group">
-      <label for="prix_unitaire">Prix unitaire (FCFA) *</label>
-      <input type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" value="{{ materiau.prix_unitaire|default:'' }}" required>
-    </div>
-  </div>
+      
+      <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+        <div class="nice-form-card" style="flex:1">
+          <form method="post" id="materiau-form">
+            {% csrf_token %}
+            <div class="nice-form-grid">
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="nom">Nom du matériau *</label>
+                <input class="nice-input" type="text" id="nom" name="nom" value="{{ materiau.nom|default:'' }}" required>
+              </div>
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="categorie">Catégorie *</label>
+                <select class="nice-input" id="categorie" name="categorie" required>
+                  <option value="construction" {% if materiau and materiau.categorie == 'construction' %}selected{% endif %}>Matériaux de construction</option>
+                  <option value="electricite" {% if materiau and materiau.categorie == 'electricite' %}selected{% endif %}>Électricité</option>
+                  <option value="plomberie" {% if materiau and materiau.categorie == 'plomberie' %}selected{% endif %}>Plomberie</option>
+                  <option value="peinture" {% if materiau and materiau.categorie == 'peinture' %}selected{% endif %}>Peinture</option>
+                  <option value="outillage" {% if materiau and materiau.categorie == 'outillage' %}selected{% endif %}>Outillage</option>
+                  <option value="autre" {% if materiau and materiau.categorie == 'autre' %}selected{% endif %}>Autre</option>
+                </select>
+              </div>
+            </div>
 
-  <div class="form-row">
-    <div class="form-group">
-      <label for="quantite_stock">Quantité en stock</label>
-      <input type="number" id="quantite_stock" name="quantite_stock" min="0" value="{{ materiau.quantite_stock|default:0 }}">
-    </div>
-    <div class="form-group">
-      <label for="seuil_minimum">Seuil minimum</label>
-      <input type="number" id="seuil_minimum" name="seuil_minimum" min="0" value="{{ materiau.seuil_minimum|default:0 }}">
-    </div>
-  </div>
+            <div class="nice-form-row">
+              <label class="nice-form-label" for="description">Description</label>
+              <textarea class="nice-input" id="description" name="description" rows="2">{{ materiau.description|default:'' }}</textarea>
+            </div>
 
-  <div class="form-group">
-    <label for="fournisseur">Fournisseur</label>
-    <select id="fournisseur" name="fournisseur">
-      <option value="">Sélectionner un fournisseur</option>
-      {% for fournisseur in fournisseurs %}
-        <option value="{{ fournisseur.id }}" {% if materiau and materiau.fournisseur and materiau.fournisseur.id == fournisseur.id %}selected{% endif %}>{{ fournisseur.nom }}</option>
-      {% endfor %}
-    </select>
-  </div>
+            <div class="nice-form-grid">
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="unite">Unité</label>
+                <input class="nice-input" type="text" id="unite" name="unite" value="{{ materiau.unite|default:'unités' }}" placeholder="unités, kg, m², etc.">
+              </div>
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="prix_unitaire">Prix unitaire (FCFA) *</label>
+                <input class="nice-input" type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" value="{{ materiau.prix_unitaire|default:'' }}" required>
+              </div>
+            </div>
 
-  <div class="form-actions">
-    <button class="primary" type="submit">Enregistrer</button>
-    <a href="{% url 'core:materiaux' %}" class="secondary">Annuler</a>
-  </div>
-</form>
-{% endblock %}
+            <div class="nice-form-grid">
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="quantite_stock">Quantité en stock</label>
+                <input class="nice-input" type="number" id="quantite_stock" name="quantite_stock" min="0" value="{{ materiau.quantite_stock|default:0 }}">
+              </div>
+              <div class="nice-form-row">
+                <label class="nice-form-label" for="seuil_minimum">Seuil minimum</label>
+                <input class="nice-input" type="number" id="seuil_minimum" name="seuil_minimum" min="0" value="{{ materiau.seuil_minimum|default:0 }}">
+              </div>
+            </div>
+
+            <div class="nice-form-row">
+              <label class="nice-form-label" for="fournisseur">Fournisseur</label>
+              <select class="nice-input" id="fournisseur" name="fournisseur">
+                <option value="">Sélectionner un fournisseur</option>
+                {% for fournisseur in fournisseurs %}
+                  <option value="{{ fournisseur.id }}" {% if materiau and materiau.fournisseur and materiau.fournisseur.id == fournisseur.id %}selected{% endif %}>{{ fournisseur.nom }}</option>
+                {% endfor %}
+              </select>
+              <div style="margin-top:8px;color:#666;font-size:0.95rem">Ou cherchez : <input list="fournisseurs_list" id="fournisseur_search" placeholder="Rechercher par nom"></div>
+              <datalist id="fournisseurs_list"></datalist>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-primary" type="submit">Enregistrer</button>
+              <a href="{% url 'core:materiaux' %}" class="btn-secondary">Annuler</a>
+            </div>
+          </form>
+        </div>
+
+        <aside class="recent-panel">
+          <h3 style="margin:0 0 8px 0">Derniers fournisseurs</h3>
+          <div id="recent-fournisseurs-mat">Chargement…</div>
+        </aside>
+      </div>
+
+      {% block extra_scripts %}
+      <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        fetch('{% url "core:api_fournisseurs" %}')
+          .then(r=>r.json())
+          .then(data=>{
+            const list = document.getElementById('fournisseurs_list');
+            const recent = document.getElementById('recent-fournisseurs-mat');
+            list.innerHTML = '';
+            recent.innerHTML = '';
+            (data.fournisseurs||[]).forEach(f=>{ const opt=document.createElement('option'); opt.value=f.nom; list.appendChild(opt); });
+            (data.fournisseurs||[]).slice(0,6).forEach(f=>{ const el=document.createElement('div'); el.className='recent-item'; el.innerHTML=`<strong>${f.nom}</strong><div style="color:#666">${f.telephone||''}</div>`; recent.appendChild(el); });
+
+            const search = document.getElementById('fournisseur_search');
+            search.addEventListener('input', ()=>{
+              const val = search.value.trim(); if(!val) return; const sel = document.getElementById('fournisseur');
+              for(let i=0;i<sel.options.length;i++){ if(sel.options[i].text.toLowerCase() === val.toLowerCase()){ sel.selectedIndex = i; return; } }
+            });
+          }).catch(()=>{ document.getElementById('recent-fournisseurs-mat').innerText = 'Erreur de chargement'; });
+      });
+      </script>
+      {% endblock %}
+    {% endblock %}

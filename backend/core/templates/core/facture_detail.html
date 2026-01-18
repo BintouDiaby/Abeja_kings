@@ -1,0 +1,124 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Facture {{ facture.numero }}{% endblock %}
+
+{% block content %}
+<div class="facture-detail-shell">
+  <div class="header-row">
+    <div>
+      <h2>Facture {{ facture.numero }}</h2>
+      <div class="badges">
+        <span class="status-pill">{{ facture.get_statut_display }}</span>
+        <span class="amount">{% if request.user.userprofile.role == 'chef' %}—{% else %}{{ facture.total|floatformat:0 }} FCFA{% endif %}</span>
+      </div>
+      <p>Émise le {{ facture.date|date:'d/m/Y' }} · Échéance {{ facture.date_echeance|date:'d/m/Y' }}</p>
+    </div>
+    <div class="actions">
+      {% if request.user.userprofile.role != 'chef' %}
+      <a href="#" class="btn">Télécharger PDF</a>
+      <a href="#" class="btn">Envoyer au client</a>
+      {% endif %}
+      {% if request.user.userprofile.role == 'admin' or request.user.userprofile.role == 'comptable' %}
+      <a href="{% url 'core:facture_new' %}" class="btn">Modifier</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="layout-grid">
+    <div class="col-left">
+      <section class="card">
+        <h3>Client</h3>
+        <p><strong>{{ facture.client.nom }}</strong></p>
+        <p>{{ facture.client.telephone }}</p>
+        <p>{{ facture.client.email }}</p>
+        <a href="{% url 'core:clients' %}" class="btn-link">Voir fiche client</a>
+      </section>
+
+      <section class="card">
+        <h3>Chantier concerné</h3>
+        {% if facture.chantier %}
+          <p><strong>{{ facture.chantier.nom }}</strong></p>
+          <p>{{ facture.chantier.client.nom }}</p>
+          <p>Responsable: {{ facture.chantier.chef_chantier.get_full_name }}</p>
+        {% else %}
+          <p>— Aucun chantier lié —</p>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h3>Détails</h3>
+        <table class="lines">
+          <thead><tr><th>Désignation</th><th>Quantité</th><th>PU</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for ln in facture.lignes.all %}
+            <tr>
+              <td>{{ ln.description }}</td>
+              <td>{{ ln.quantite }}</td>
+              <td>{% if request.user.userprofile.role == 'chef' %}—{% else %}{{ ln.prix_unitaire|floatformat:0 }}{% endif %}</td>
+              <td>{% if request.user.userprofile.role == 'chef' %}—{% else %}{{ ln.montant|floatformat:0 }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="col-right">
+      <section class="card">
+        <h3>Récapitulatif</h3>
+        <p>Sous-total: {% if request.user.userprofile.role == 'chef' %}—{% else %}{{ facture.subtotal|floatformat:0 }} FCFA{% endif %}</p>
+        <p>TVA ({{ facture.tva_pct }}%): {% if request.user.userprofile.role == 'chef' %}—{% else %}{{ facture.tva_amount|floatformat:0 }} FCFA{% endif %}</p>
+        <p><strong>Total TTC: {% if request.user.userprofile.role == 'chef' %}—{% else %}{{ facture.total|floatformat:0 }} FCFA{% endif %}</strong></p>
+        <p>Reste à payer: {% if request.user.userprofile.role == 'chef' %}—{% else %}{{ facture.reste_a_payer|floatformat:0 }} FCFA{% endif %}</p>
+      </section>
+
+      <section class="card">
+        <h3>Paiements</h3>
+        {% if request.user.userprofile.role == 'chef' %}
+          <p>Non visible</p>
+        {% elif request.user.userprofile.role == 'admin' or request.user.userprofile.role == 'comptable' %}
+          <ul class="payments-list">
+            {% for p in payments %}
+              <li>{{ p.date|date:'d/m/Y' }} — {{ p.montant|floatformat:0 }} — {{ p.get_mode_display }} — {{ p.reference }} — par {{ p.created_by.get_full_name }}</li>
+            {% empty %}
+              <li>Aucun paiement enregistré</li>
+            {% endfor %}
+          </ul>
+
+          <h4>Ajouter un paiement</h4>
+          <form method="post">
+            {% csrf_token %}
+            {{ payment_form.as_p }}
+            <button class="btn-primary" type="submit">Enregistrer le paiement</button>
+          </form>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h3>Historique & traçabilité</h3>
+        <p>Créée: {{ facture.created_at|date:'d/m/Y H:i' }} par —</p>
+        <p>Dernière modification: —</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.facture-detail-shell{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding:18px}
+.header-row{display:flex;justify-content:space-between;align-items:center}
+.badges{display:flex;gap:12px;align-items:center}
+.status-pill{background:#f1f5f9;padding:6px 10px;border-radius:8px}
+.amount{font-weight:800;font-size:1.25rem}
+.layout-grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+.card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 8px 20px rgba(15,23,42,0.04)}
+.lines{width:100%;border-collapse:collapse}
+.lines th,.lines td{padding:8px 10px;text-align:left;border-bottom:1px solid #eee}
+.payments-list{list-style:none;padding:0;margin:0}
+.btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#eef2ff;color:#1e293b;text-decoration:none}
+.btn-primary{background:#2563eb;color:#fff;border:none;padding:10px 14px;border-radius:8px}
+.btn-link{color:#2563eb;text-decoration:none}
+</style>
+
+{% endblock %}

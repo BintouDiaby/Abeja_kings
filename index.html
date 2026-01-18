@@ -26,43 +26,10 @@
                 <span id="currentRole">Chargement...</span>
             </div>
             
-            <div class="nav-menu">
-                <div class="nav-item active" data-page="dashboard">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Tableau de Bord</span>
-                </div>
-                <div class="nav-item" data-page="chantiers">
-                    <i class="fas fa-hard-hat"></i>
-                    <span>Gestion Chantiers</span>
-                </div>
-                <div class="nav-item" data-page="personnel">
-                    <i class="fas fa-users"></i>
-                    <span>Gestion Personnel</span>
-                </div>
-                <div class="nav-item" data-page="materiaux">
-                    <i class="fas fa-boxes"></i>
-                    <span>Gestion Matériaux</span>
-                </div>
-                <div class="nav-item" data-page="devis-factures">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Devis & Factures</span>
-                </div>
-                <div class="nav-item" data-page="rapports">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span>Rapports Journaliers</span>
-                </div>
-                <div class="nav-item" data-page="fournisseurs">
-                    <i class="fas fa-truck"></i>
-                    <span>Fournisseurs</span>
-                </div>
-                <div class="nav-item" data-page="clients">
-                    <i class="fas fa-user-tie"></i>
-                    <span>Clients</span>
-                </div>
-            </div>
+            <div class="nav-menu" id="dynamicNavMenu"></div>
             
             <!-- User profile in sidebar -->
-            <div class="sidebar-footer">
+            <div class="sidebar-footer user-profile-section">
                 <div class="user-profile">
                     <div class="user-avatar">
                         <div class="avatar-fallback" id="userInitials">AK</div>
@@ -94,14 +61,12 @@
                         <i class="fas fa-search"></i>
                         <input type="text" placeholder="Rechercher...">
                     </div>
-                    
                     <div class="header-actions">
                         <div class="notification-badge">
                             <i class="fas fa-bell"></i>
                             <span class="badge">3</span>
                         </div>
-                        
-                        <div class="header-user">
+                        <div class="header-user user-profile-section">
                             <div class="user-info">
                                 <span class="user-name" id="headerUserName">Admin Abeja</span>
                                 <span class="user-role" id="headerUserRole">Administrateur</span>
@@ -172,10 +137,10 @@
                                 <div class="section-header">
                                     <h3>Chantiers Récents</h3>
                                     <div class="section-actions">
-                                        <button class="btn btn-outline">
+                                        <button class="btn btn-outline btn-filtrer-chantier">
                                             <i class="fas fa-filter"></i> Filtrer
                                         </button>
-                                        <button class="btn btn-primary" onclick="showPage('chantiers')">
+                                        <button class="btn btn-primary btn-nouveau-chantier" onclick="showPage('chantiers')">
                                             <i class="fas fa-plus"></i> Nouveau
                                         </button>
                                     </div>
@@ -297,7 +262,7 @@
     </div>
 
     <!-- Modal Nouveau Chantier -->
-    <div id="modal-new-chantier" class="modal">
+    <div id="modal-new-chantier" class="modal modal-nouveau-chantier modal-hide-chef">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nouveau Chantier</h3>
@@ -346,132 +311,9 @@
         </div>
     </div>
 
-    <!-- Modal Nouveau Client -->
-    <div id="modal-new-client" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nouveau Client</h3>
-                <button class="btn btn-close" onclick="closeModal('modal-new-client')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="form-new-client" class="modern-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="client-nom">Nom / Raison sociale</label>
-                            <input type="text" id="client-nom" placeholder="Ex: Kouassi Traoré" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="client-email">Email</label>
-                            <input type="email" id="client-email" placeholder="contact@exemple.ci">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="client-telephone">Téléphone</label>
-                            <input type="text" id="client-telephone" placeholder="+225 21 23 45 67">
-                        </div>
-                        <div class="form-group">
-                            <label for="client-adresse">Adresse</label>
-                            <input type="text" id="client-adresse" placeholder="Marcory, Abidjan">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modal-new-client')">Annuler</button>
-                <button class="btn btn-primary" onclick="saveNewClient()">
-                    <i class="fas fa-plus"></i> Ajouter le Client
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Nouvelle Facture -->
-    <div id="modal-new-facture" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nouvelle Facture</h3>
-                <button class="btn btn-close" onclick="closeModal('modal-new-facture')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="form-new-facture" class="modern-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="facture-client">Client</label>
-                            <select id="facture-client" required>
-                                <option value="">Chargement...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="facture-chantier">Chantier</label>
-                            <select id="facture-chantier" required>
-                                <option value="">Chargement...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 1 1 60%;">
-                            <label>Lignes de facture</label>
-                            <div class="lines-container">
-                                <table class="lines-table" id="facture-lines-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Description</th>
-                            <th>Quantité</th>
-                                <th>PU (FCFA)</th>
-                                            <th>Montant</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="facture-lines-body">
-                                        <!-- rows ajoutées dynamiquement -->
-                                    </tbody>
-                                </table>
-                                <button type="button" class="btn btn-outline" onclick="addFactureLineRow()">
-                                    <i class="fas fa-plus"></i> Ajouter une ligne
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="flex: 1 1 35%;">
-                            <label for="facture-date">Date</label>
-                            <input type="date" id="facture-date" required>
-
-                            <label for="facture-statut" style="margin-top:12px">Statut</label>
-                            <select id="facture-statut">
-                                <option value="pending">En Attente</option>
-                                <option value="active">En Cours</option>
-                                <option value="completed">Payée</option>
-                            </select>
-
-                            <label for="facture-tva" style="margin-top:12px">TVA (%)</label>
-                            <input type="number" id="facture-tva" value="18" min="0" step="0.1">
-
-                            <div class="totals" style="margin-top:12px;">
-                                <div>Sous-total: <strong id="facture-subtotal">0 FCFA</strong></div>
-                                <div>TVA: <strong id="facture-tva-montant">0 FCFA</strong></div>
-                                <div>Total TTC: <strong id="facture-total-ttc">0 FCFA</strong></div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modal-new-facture')">Annuler</button>
-                <button class="btn btn-primary" onclick="saveNewFacture()">
-                    <i class="fas fa-plus"></i> Créer la Facture
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal Nouveau Rapport -->
-    <div id="modal-new-rapport" class="modal">
+    <div id="modal-new-rapport" class="modal modal-nouveau-rapport">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nouveau Rapport Journalier</h3>
@@ -518,6 +360,61 @@
         </div>
     </div>
 
+    <script>
+    // Menu dynamique selon le rôle
+    (function() {
+        var navMenu = document.getElementById('dynamicNavMenu');
+        var user = localStorage.getItem('currentUser');
+        var role = user ? JSON.parse(user).role : null;
+        var links = [];
+        // Sécurité stricte : ne jamais afficher les liens interdits au chef de chantier
+        var allowedPagesChef = ['dashboard', 'chantiers', 'materiaux', 'rapports'];
+        var allowedPagesAdmin = ['dashboard', 'chantiers', 'materiaux', 'devis-factures', 'rapports', 'fournisseurs', 'clients'];
+        if (role === 'chef') {
+            links = [
+                {page: 'dashboard', icon: 'fa-chart-pie', label: 'Tableau de Bord'},
+                {page: 'chantiers', icon: 'fa-hard-hat', label: 'Mes Chantiers'},
+                {page: 'materiaux', icon: 'fa-boxes', label: 'Matériaux'},
+                {page: 'rapports', icon: 'fa-clipboard-list', label: 'Rapports Journaliers'}
+            ];
+        } else {
+            links = [
+                {page: 'dashboard', icon: 'fa-chart-pie', label: 'Tableau de Bord'},
+                {page: 'chantiers', icon: 'fa-hard-hat', label: 'Gestion Chantiers'},
+                {page: 'materiaux', icon: 'fa-boxes', label: 'Gestion Matériaux'},
+                {page: 'devis-factures', icon: 'fa-file-invoice-dollar', label: 'Devis & Factures'},
+                {page: 'rapports', icon: 'fa-clipboard-list', label: 'Rapports Journaliers'},
+                {page: 'fournisseurs', icon: 'fa-truck', label: 'Fournisseurs'},
+                {page: 'clients', icon: 'fa-user-tie', label: 'Clients'}
+            ];
+        }
+        // Filtrage strict (anti-injection)
+        links = links.filter(function(link) {
+            if (role === 'chef') return allowedPagesChef.includes(link.page);
+            return allowedPagesAdmin.includes(link.page);
+        });
+        var html = '';
+        links.forEach(function(link, idx) {
+            html += '<div class="nav-item'+(idx===0?' active':'')+'" data-page="'+link.page+'">';
+            html += '<i class="fas '+link.icon+'"></i>';
+            html += '<span>'+link.label+'</span>';
+            html += '</div>';
+        });
+        navMenu.innerHTML = html;
+
+        // Supprime les boutons/actions rapides et le profil utilisateur pour chef de chantier
+        if (role === 'chef') {
+            // Actions rapides (boutons, modales, etc.)
+            document.querySelectorAll('.btn-nouveau-chantier, .btn-nouvelle-facture, .btn-gerer-fournisseurs, .modal-hide-chef, .section-fournisseurs').forEach(function(el){
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            });
+            // Profil utilisateur sidebar/header
+            document.querySelectorAll('.user-profile-section, .header-user').forEach(function(el){
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            });
+        }
+    })();
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

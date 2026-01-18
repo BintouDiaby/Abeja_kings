@@ -6,6 +6,13 @@ class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = ['nom', 'contact', 'telephone', 'email', 'adresse']
+        widgets = {
+            'nom': forms.TextInput(attrs={'class': 'nice-input', 'placeholder': 'Nom'}),
+            'contact': forms.TextInput(attrs={'class': 'nice-input', 'placeholder': 'Contact'}),
+            'telephone': forms.TextInput(attrs={'class': 'nice-input', 'placeholder': 'Téléphone'}),
+            'email': forms.EmailInput(attrs={'class': 'nice-input', 'placeholder': 'Email'}),
+            'adresse': forms.Textarea(attrs={'class': 'nice-input', 'placeholder': 'Adresse', 'rows': 3}),
+        }
 
 
 class FactureForm(forms.ModelForm):
@@ -18,6 +25,22 @@ class FactureLineForm(forms.ModelForm):
     class Meta:
         model = FactureLine
         fields = ['description', 'quantite', 'prix_unitaire', 'montant']
+
+
+class PaymentForm(forms.Form):
+    montant = forms.DecimalField(max_digits=12, decimal_places=2)
+    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    mode = forms.ChoiceField(choices=[('espece','Espèces'),('virement','Virement'),('cheque','Chèque'),('carte','Carte'),('autre','Autre')])
+    reference = forms.CharField(max_length=200, required=False)
+
+
+class PersonnelPaymentForm(forms.Form):
+    montant = forms.DecimalField(max_digits=12, decimal_places=2)
+    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    mode = forms.ChoiceField(choices=[('espece','Espèces'),('virement','Virement'),('cheque','Chèque'),('carte','Carte'),('autre','Autre')])
+    reference = forms.CharField(max_length=200, required=False)
+    periode = forms.CharField(max_length=32, required=False, help_text='Période (ex: 2026-01)')
+    note = forms.CharField(widget=forms.Textarea(attrs={'rows':2}), required=False)
 
 
 class ChantierForm(forms.ModelForm):
@@ -34,7 +57,7 @@ class ChantierForm(forms.ModelForm):
 class PersonnelForm(forms.ModelForm):
     class Meta:
         model = Personnel
-        fields = ['user', 'role', 'taux_horaire', 'telephone', 'adresse', 'date_embauche', 'chantier_actuel', 'est_actif']
+        fields = ['user', 'role', 'taux_journalier', 'salaire_mensuel', 'telephone', 'adresse', 'date_embauche', 'chantier_actuel', 'est_actif']
         widgets = {
             'date_embauche': forms.DateInput(attrs={'type': 'date'}),
             'adresse': forms.Textarea(attrs={'rows': 2}),

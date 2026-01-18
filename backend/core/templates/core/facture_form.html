@@ -1,10 +1,187 @@
 {% extends 'core/base.html' %}
+{% load static %}
+
 {% block title %}Nouvelle facture{% endblock %}
+
+{% block extrastyle %}
+<style>
+.invoice-form{max-width:1100px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.invoice-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.invoice-card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 8px 20px rgba(15,23,42,0.04)}
+.lines-table{width:100%;border-collapse:collapse}
+.lines-table th,.lines-table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.small{font-size:0.9rem;color:#6b7280}
+.actions-row{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none}
+.btn-ghost{background:#f3f4f6;color:#111}
+.input-small{width:100px}
+.input-medium{width:160px}
+.right{text-align:right}
+.summary{display:flex;flex-direction:column;gap:6px}
+</style>
+{% endblock %}
+
 {% block content %}
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="primary" type="submit">Enregistrer</button>
-  <a href="{% url 'core:factures' %}" class="secondary">Annuler</a>
-</form>
+<div class="invoice-form">
+  <div class="invoice-header">
+    <div>
+      <h2>Nouvelle facture</h2>
+      <p class="small">Créez une facture avec lignes dynamiques, calcule automatiquement les totaux.</p>
+    </div>
+    <div class="actions-row">
+      <a href="{% url 'core:factures' %}" class="btn-ghost">Retour</a>
+      <button id="saveDraft" class="btn-ghost">Enregistrer brouillon</button>
+    </div>
+  </div>
+
+  <form id="invoice-form" method="post">
+    {% csrf_token %}
+    <div class="invoice-card">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <label>Client</label>
+          <select id="client" name="client" required>
+            <option value="">-- Sélectionner client --</option>
+            {% for c in clients %}
+              <option value="{{ c.id }}">{{ c.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="min-width:220px">
+          <label>Chantier (optionnel)</label>
+          <select id="chantier" name="chantier">
+            <option value="">-- Aucun --</option>
+            {% for ch in chantiers %}
+              <option value="{{ ch.id }}">{{ ch.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="min-width:160px">
+          <label>Date</label>
+          <input type="date" name="date" value="{{ today|default:None }}" required />
+        </div>
+        <div style="min-width:160px">
+          <label>TVA (%)</label>
+          <input id="tva_pct" name="tva_pct" type="number" step="0.01" value="18" />
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-card">
+      <h3>Lignes de facture</h3>
+      <table class="lines-table">
+        <thead>
+          <tr><th>Désignation</th><th>Quantité</th><th>PU</th><th class="right">Total</th><th></th></tr>
+        </thead>
+        <tbody id="lines-body">
+          <tr class="line-row">
+            <td><input class="desc" name="desc_0" placeholder="Travaux, matériel..." required></td>
+            <td><input class="qty input-small" name="qty_0" type="number" step="0.01" value="1"></td>
+            <td><input class="pu input-medium" name="pu_0" type="number" step="0.01" value="0"></td>
+            <td class="right line-total">0</td>
+            <td><button type="button" class="btn-ghost remove-line">Supprimer</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px; display:flex; justify-content:flex-start">
+        <button type="button" id="add-line" class="btn-ghost">+ Ajouter une ligne</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="flex:1"></div>
+      <div style="width:320px">
+        <div class="invoice-card summary">
+          <div class="small">Sous-total: <span id="subtotal_display">0</span></div>
+          <div class="small">TVA (<span id="tva_pct_display">18</span>%): <span id="tva_display">0</span></div>
+          <div class="small"><strong>Total TTC: <span id="total_display">0</span></strong></div>
+          <input type="hidden" name="subtotal" id="subtotal_input" />
+          <input type="hidden" name="tva_amount" id="tva_input" />
+          <input type="hidden" name="total" id="total_input" />
+          <input type="hidden" name="lines_json" id="lines_json" />
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button type="submit" class="btn">Enregistrer</button>
+          <a href="{% url 'core:factures' %}" class="btn-ghost">Annuler</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const linesBody = document.getElementById('lines-body');
+  const addLineBtn = document.getElementById('add-line');
+  const tvaPctInput = document.getElementById('tva_pct');
+  const subtotalDisplay = document.getElementById('subtotal_display');
+  const tvaDisplay = document.getElementById('tva_display');
+  const totalDisplay = document.getElementById('total_display');
+  const subtotalInput = document.getElementById('subtotal_input');
+  const tvaInput = document.getElementById('tva_input');
+  const totalInput = document.getElementById('total_input');
+  const linesJsonInput = document.getElementById('lines_json');
+
+  function recalc(){
+    const rows = Array.from(linesBody.querySelectorAll('.line-row'));
+    let subtotal = 0;
+    rows.forEach(r =>{
+      const qty = parseFloat(r.querySelector('.qty').value || 0);
+      const pu = parseFloat(r.querySelector('.pu').value || 0);
+      const total = qty * pu;
+      r.querySelector('.line-total').textContent = total.toLocaleString('fr-FR');
+      subtotal += total;
+    });
+    const tvaPct = parseFloat(tvaPctInput.value || 0);
+    const tva = (subtotal * tvaPct) / 100;
+    const total = subtotal + tva;
+    subtotalDisplay.textContent = subtotal.toLocaleString('fr-FR');
+    tvaDisplay.textContent = tva.toLocaleString('fr-FR');
+    totalDisplay.textContent = total.toLocaleString('fr-FR');
+    subtotalInput.value = subtotal;
+    tvaInput.value = tva;
+    totalInput.value = total;
+    document.getElementById('tva_pct_display').textContent = tvaPct;
+  }
+
+  function attachRowEvents(row){
+    row.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', recalc));
+    const removeBtn = row.querySelector('.remove-line');
+    removeBtn.addEventListener('click', function(){
+      if(linesBody.querySelectorAll('.line-row').length>1){ row.remove(); recalc(); }
+    });
+  }
+
+  addLineBtn.addEventListener('click', function(){
+    const idx = linesBody.querySelectorAll('.line-row').length;
+    const tr = document.createElement('tr'); tr.className='line-row';
+    tr.innerHTML = `<td><input class="desc" name="desc_${idx}" placeholder="Description" required></td>`+
+                   `<td><input class="qty input-small" name="qty_${idx}" type="number" step="0.01" value="1"></td>`+
+                   `<td><input class="pu input-medium" name="pu_${idx}" type="number" step="0.01" value="0"></td>`+
+                   `<td class="right line-total">0</td>`+
+                   `<td><button type="button" class="btn-ghost remove-line">Supprimer</button></td>`;
+    linesBody.appendChild(tr);
+    attachRowEvents(tr);
+  });
+
+  // attach events to initial row
+  attachRowEvents(linesBody.querySelector('.line-row'));
+  tvaPctInput.addEventListener('input', recalc);
+  recalc();
+
+  // prepare lines_json before submit
+  document.getElementById('invoice-form').addEventListener('submit', function(e){
+    const rows = Array.from(linesBody.querySelectorAll('.line-row'));
+    const lines = rows.map(r=>({
+      description: r.querySelector('.desc').value,
+      quantite: r.querySelector('.qty').value,
+      pu: r.querySelector('.pu').value,
+      total: r.querySelector('.line-total').textContent.replace(/\s/g,'')
+    }));
+    linesJsonInput.value = JSON.stringify(lines);
+    // allow normal submit to backend (FactureCreateView handles lines_json)
+  });
+});
+</script>
+
 {% endblock %}

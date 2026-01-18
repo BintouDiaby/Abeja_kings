@@ -1068,7 +1068,7 @@ class AbejaKingsApp {
 
         const allowedPagesByRole = {
             'directeur': ['dashboard','chantiers','personnel','materiaux','devis-factures','rapports','fournisseurs','clients'],
-            'chef': ['dashboard','chantiers','materiaux','rapports','clients'],
+            'chef': ['dashboard','chantiers','materiaux','rapports'],
             'ouvrier': ['rapports','chantiers']
         };
 
@@ -1251,9 +1251,13 @@ class AbejaKingsApp {
         // Vérifier les permissions avant d'afficher la page
         const allowed = this._allowedPages || [];
         if (allowed.length && !allowed.includes(page)) {
-            // Afficher message d'accès refusé et quitter
+            // Afficher message d'accès refusé et rediriger vers dashboard
             this.showAccessDenied(page);
             showNotification("Accès refusé : vous n'avez pas la permission.", 'error');
+            // Redirige automatiquement vers le dashboard après 1s
+            setTimeout(() => {
+                this.showPage('dashboard');
+            }, 1000);
             return;
         }
 
@@ -1459,10 +1463,48 @@ function requestCsrf() {
     }
 }
 
+// Récupère l'utilisateur courant depuis le backend et stocke dans localStorage
+function fetchCurrentUser() {
+    return new Promise((resolve) => {
+        try {
+            const backend = window.BACKEND_ORIGIN || '';
+            const url = (backend ? backend : '') + '/api/user/';
+            fetch(url, { credentials: 'include' })
+                .then(r => {
+                    if (!r.ok) throw new Error('not ok');
+                    return r.json();
+                })
+                .then(data => {
+                    if (data && data.username) {
+                        // Normaliser les champs utilisés côté client
+                        const clientUser = {
+                            id: data.id,
+                            username: data.username,
+                            email: data.email,
+                            nom: data.full_name || data.username,
+                            role: data.role || 'ouvrier',
+                            telephone: data.telephone || ''
+                        };
+                        localStorage.setItem('currentUser', JSON.stringify(clientUser));
+                        resolve(clientUser);
+                    } else {
+                        resolve(null);
+                    }
+                })
+                .catch(() => resolve(null));
+        } catch (e) {
+            resolve(null);
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Request CSRF cookie first (no-op if not served from same origin)
     requestCsrf();
-    window.app = new AbejaKingsApp();
+    // Ensure we have the current user from the backend before initializing the SPA
+    fetchCurrentUser().then(() => {
+        window.app = new AbejaKingsApp();
+    });
 });
 
 // Close modal when clicking outside

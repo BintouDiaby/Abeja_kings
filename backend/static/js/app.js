@@ -8,6 +8,11 @@ class AbejaKingsApp {
     async init() {
         this.setupNavigation();
         await this.loadUserData();
+        // Appliquer les permissions AVANT d'afficher la page
+        const userData = JSON.parse(localStorage.getItem('currentUser'));
+        if (userData) {
+            this.applyRolePermissions(userData.role);
+        }
         await this.showPage('dashboard');
     }
 
@@ -22,6 +27,28 @@ class AbejaKingsApp {
     }
 
     async showPage(pageName) {
+        // Bloquer l'accès aux pages interdites pour le chef de chantier
+        const userData = JSON.parse(localStorage.getItem('currentUser'));
+        if (userData && userData.role === 'chef') {
+            const forbiddenPages = ['personnel', 'devis-factures', 'fournisseurs'];
+            if (forbiddenPages.includes(pageName)) {
+                // Affiche un message d'accès refusé
+                const otherContent = document.getElementById('other-content');
+                if (otherContent) {
+                    otherContent.style.display = 'block';
+                    otherContent.innerHTML = '<div class="content-section"><div class="error-message" style="color:red;font-weight:bold;font-size:1.2em;"><i class="fas fa-ban"></i> Accès interdit pour ce rôle</div></div>';
+                }
+                // Masque le dashboard si besoin
+                const dashboardContent = document.getElementById('dashboard-content');
+                if (dashboardContent) dashboardContent.style.display = 'none';
+                // Met à jour le titre
+                const pageTitle = document.getElementById('page-title');
+                if (pageTitle) pageTitle.textContent = 'Accès interdit';
+                this.currentPage = pageName;
+                return;
+            }
+        }
+
         // Update navigation active state
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
@@ -36,6 +63,11 @@ class AbejaKingsApp {
             content.style.display = 'none';
         });
 
+        // Appliquer les permissions AVANT d'afficher la page
+        if (userData) {
+            this.applyRolePermissions(userData.role);
+        }
+
         // Show the selected page content
         if (pageName === 'dashboard') {
             const dashboardContent = document.getElementById('dashboard-content');
@@ -48,6 +80,10 @@ class AbejaKingsApp {
             if (otherContent) {
                 otherContent.style.display = 'block';
                 await this.showSpecificPage(pageName);
+                // Réappliquer le masquage après chargement dynamique
+                if (userData) {
+                    this.applyRolePermissions(userData.role);
+                }
             }
         }
 
@@ -93,7 +129,7 @@ class AbejaKingsApp {
                     FacturesManager.loadFacturesPage(otherContent);
                     break;
                 case 'rapports':
-                    ReportsManager.loadRapportsPage(otherContent);
+                    await ReportsManager.loadRapportsPage(otherContent);
                     break;
                 case 'fournisseurs':
                     await FournisseursManager.loadFournisseursPage(otherContent);
@@ -161,6 +197,27 @@ class AbejaKingsApp {
             if (roleBadge) {
                 roleBadge.textContent = this.getRoleDisplayName(userData.role);
             }
+
+            // Appliquer les permissions selon le rôle
+            this.applyRolePermissions(userData.role);
+        }
+    }
+
+    applyRolePermissions(role) {
+        // Restrictions pour les chefs de chantier
+        if (role === 'chef') {
+            // Supprimer du DOM les éléments non autorisés pour le chef
+            // Navigation
+            ['devis-factures', 'fournisseurs', 'personnel'].forEach(page => {
+                const item = document.querySelector(`.nav-item[data-page="${page}"]`);
+                if (item) item.remove();
+            });
+
+            // Actions rapides et modales
+            document.querySelectorAll('.btn-nouveau-chantier, .modal-hide-chef, .btn-nouvelle-facture, .btn-gerer-fournisseurs, .section-fournisseurs').forEach(el => el.remove());
+
+            // Profil utilisateur sidebar/header
+            document.querySelectorAll('.user-profile-section').forEach(el => el.remove());
         }
     }
 
@@ -369,6 +426,17 @@ class DataManager {
                         email: fournisseur.email,
                         telephone: fournisseur.telephone,
                         specialite: fournisseur.specialite
+                    }));
+                    break;
+                case 'rapports':
+                    transformedData = (data.rapports || []).map(r => ({
+                        id: r.id,
+                        titre: r.titre,
+                        date: r.date,
+                        auteur: r.auteur ? r.auteur.full_name : null,
+                        resume: (r.contenu || '').substring(0, 200),
+                        chantier: r.chantier ? r.chantier.nom : null,
+                        created_at: r.created_at
                     }));
                     break;
                 default:
@@ -867,6 +935,21 @@ class ClientsManager {
 // FacturesManager class
 class FacturesManager {
     static loadFacturesPage(container) {
+        const role = (JSON.parse(localStorage.getItem('currentUser')) || {}).role;
+        if (role === 'chef') {
+            container.innerHTML = `
+                <div class="content-section">
+                    <div class="section-header">
+                        <h3>Devis & Factures</h3>
+                    </div>
+                    <div class="info-box warning">
+                        <i class="fas fa-lock"></i>
+                        Accès réservé à l'administrateur.
+                    </div>
+                </div>`;
+            return;
+        }
+
         const factures = DataManager.getFactures();
 
         container.innerHTML = `
@@ -911,6 +994,21 @@ class FacturesManager {
 // FournisseursManager class
 class FournisseursManager {
     static async loadFournisseursPage(container) {
+        const role = (JSON.parse(localStorage.getItem('currentUser')) || {}).role;
+        if (role === 'chef') {
+            container.innerHTML = `
+                <div class="content-section">
+                    <div class="section-header">
+                        <h3>Fournisseurs</h3>
+                    </div>
+                    <div class="info-box warning">
+                        <i class="fas fa-lock"></i>
+                        Accès réservé à l'administrateur.
+                    </div>
+                </div>`;
+            return;
+        }
+
         try {
             const fournisseurs = await DataManager.getFournisseurs();
 
@@ -964,8 +1062,8 @@ class FournisseursManager {
 
 // ReportsManager class
 class ReportsManager {
-    static loadRapportsPage(container) {
-        const rapports = DataManager.getRapports();
+    static async loadRapportsPage(container) {
+        const rapports = await DataManager.getRapports();
 
         container.innerHTML = `
             <div class="content-section">
@@ -1066,6 +1164,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Request CSRF cookie first (no-op if not served from same origin)
     requestCsrf();
     window.app = new AbejaKingsApp();
+});
+
+// Ensure action-card / quick-action anchors always navigate (fallback for SPA interception)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a.action-card, a.btn.btn-primary').forEach(a => {
+        a.addEventListener('click', (e) => {
+            // If anchor has a real href (absolute or root-relative), force navigation
+            const href = a.getAttribute('href');
+            if (href && href.startsWith('/')) {
+                // Let browser navigate normally; but also force in case other handlers prevented it
+                window.location.href = href;
+            }
+        });
+    });
 });
 
 // Close modal when clicking outside

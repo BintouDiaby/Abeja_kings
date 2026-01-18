@@ -5,7 +5,7 @@
     <div class="content-section">
         <div class="section-header">
             <h3>
-                <i class="fas fa-hard-hat"></i>
+                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
                 Tous les Chantiers
             </h3>
             <div class="section-actions">
@@ -21,10 +21,10 @@
                     </select>
                 </div>
                 <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouveau Chantier
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Nouveau Chantier
                 </a>
                 <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
-                    <i class="fas fa-home"></i> Retour à l'accueil
+                    <i class="fa-solid fa-home" aria-hidden="true"></i> Retour à l'accueil
                 </a>
             </div>
         </div>
@@ -57,19 +57,19 @@
                         </td>
                         <td>
                             <div class="client-info">
-                                <i class="fas fa-user"></i>
+                                <i class="fa-solid fa-user" aria-hidden="true"></i>
                                 {{ chantier.client.nom|default:"Non assigné" }}
                             </div>
                         </td>
                         <td>
                             <div class="date-info">
-                                <i class="fas fa-calendar-start"></i>
+                                <i class="fa-solid fa-calendar-start" aria-hidden="true"></i>
                                 {{ chantier.date_debut|date:"d/m/Y" }}
                             </div>
                         </td>
                         <td>
                             <div class="date-info">
-                                <i class="fas fa-calendar-end"></i>
+                                <i class="fa-solid fa-calendar-end" aria-hidden="true"></i>
                                 {{ chantier.date_fin_prevue|date:"d/m/Y" }}
                             </div>
                         </td>
@@ -95,7 +95,7 @@
                         <td>
                             {% if chantier.chef_chantier %}
                             <div class="chef-info">
-                                <i class="fas fa-user-crown"></i>
+                                <i class="fa-solid fa-user-crown" aria-hidden="true"></i>
                                 {{ chantier.chef_chantier.get_full_name }}
                             </div>
                             {% else %}
@@ -105,10 +105,10 @@
                         <td>
                             <div class="action-buttons">
                                 <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="fa-solid fa-edit" aria-hidden="true"></i>
                                 </a>
                                 <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </td>
@@ -117,11 +117,11 @@
                     <tr class="empty-row">
                         <td colspan="9">
                             <div class="empty-state">
-                                <i class="fas fa-hard-hat"></i>
+                                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
                                 <h4>Aucun chantier trouvé</h4>
                                 <p>Commencez par créer votre premier chantier.</p>
                                 <a href="{% url 'core:chantier_create' %}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> Créer un chantier
+                                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Créer un chantier
                                 </a>
                             </div>
                         </td>
@@ -142,16 +142,16 @@
         <div class="modal-body">
             <p>Êtes-vous sûr de vouloir supprimer le chantier "<strong id="delete-chantier-name"></strong>" ?</p>
             <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-exclamation-triangle" aria-hidden="true"></i>
                 Cette action est irréversible et supprimera toutes les données associées au chantier.
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeDeleteModal()">
-                <i class="fas fa-times"></i> Annuler
+                <i class="fa-solid fa-times" aria-hidden="true"></i> Annuler
             </button>
             <button class="btn btn-danger" id="confirmDeleteBtn">
-                <i class="fas fa-trash"></i> Supprimer
+                <i class="fa-solid fa-trash" aria-hidden="true"></i> Supprimer
             </button>
         </div>
     </div>

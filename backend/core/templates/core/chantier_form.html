@@ -5,12 +5,12 @@
     <div class="content-section">
         <div class="section-header">
             <h3>
-                <i class="fas fa-hard-hat"></i>
+                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
                 {% if chantier %}Modifier le chantier{% else %}Nouveau chantier{% endif %}
             </h3>
             <div class="section-actions">
                 <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
-                    <i class="fas fa-home"></i> Retour à l'accueil
+                    <i class="fa-solid fa-home" aria-hidden="true"></i> Retour à l'accueil
                 </a>
             </div>
         </div>
@@ -22,14 +22,14 @@
                 <!-- Informations générales -->
                 <div class="form-section">
                     <h4 class="form-section-title">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="fa-solid fa-info-circle" aria-hidden="true"></i>
                         Informations générales
                     </h4>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="nom">
-                                <i class="fas fa-tag"></i>
+                                <i class="fa-solid fa-tag" aria-hidden="true"></i>
                                 Nom du chantier *
                             </label>
                             <input type="text" id="nom" name="nom" value="{{ chantier.nom|default:'' }}" required
@@ -38,7 +38,7 @@
 
                         <div class="form-group">
                             <label for="client">
-                                <i class="fas fa-user-tie"></i>
+                                <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
                                 Client *
                             </label>
                             <select id="client" name="client" required>
@@ -54,7 +54,7 @@
 
                     <div class="form-group">
                         <label for="description">
-                            <i class="fas fa-align-left"></i>
+                            <i class="fa-solid fa-align-left" aria-hidden="true"></i>
                             Description
                         </label>
                         <textarea id="description" name="description" rows="4"
@@ -65,14 +65,14 @@
                 <!-- Planning et budget -->
                 <div class="form-section">
                     <h4 class="form-section-title">
-                        <i class="fas fa-calendar-alt"></i>
+                        <i class="fa-solid fa-calendar-alt" aria-hidden="true"></i>
                         Planning et budget
                     </h4>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="date_debut">
-                                <i class="fas fa-play-circle"></i>
+                                <i class="fa-solid fa-play-circle" aria-hidden="true"></i>
                                 Date de début *
                             </label>
                             <input type="date" id="date_debut" name="date_debut"
@@ -81,7 +81,7 @@
 
                         <div class="form-group">
                             <label for="date_fin_prevue">
-                                <i class="fas fa-stop-circle"></i>
+                                <i class="fa-solid fa-stop-circle" aria-hidden="true"></i>
                                 Date de fin prévue *
                             </label>
                             <input type="date" id="date_fin_prevue" name="date_fin_prevue"
@@ -92,7 +92,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="budget">
-                                <i class="fas fa-money-bill-wave"></i>
+                                <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
                                 Budget (FCFA) *
                             </label>
                             <input type="number" id="budget" name="budget" step="0.01"
@@ -102,7 +102,7 @@
 
                         <div class="form-group">
                             <label for="statut">
-                                <i class="fas fa-tasks"></i>
+                                <i class="fa-solid fa-tasks" aria-hidden="true"></i>
                                 Statut
                             </label>
                             <select id="statut" name="statut">
@@ -118,14 +118,14 @@
                 <!-- Équipe et avancement -->
                 <div class="form-section">
                     <h4 class="form-section-title">
-                        <i class="fas fa-users"></i>
+                        <i class="fa-solid fa-users" aria-hidden="true"></i>
                         Équipe et avancement
                     </h4>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="avancement">
-                                <i class="fas fa-chart-line"></i>
+                                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                                 Avancement (%)
                             </label>
                             <div class="progress-input-container">
@@ -137,7 +137,7 @@
 
                         <div class="form-group">
                             <label for="chef_chantier">
-                                <i class="fas fa-user-crown"></i>
+                                <i class="fa-solid fa-user-crown" aria-hidden="true"></i>
                                 Chef de chantier
                             </label>
                             <select id="chef_chantier" name="chef_chantier">
@@ -156,15 +156,15 @@
             <!-- Actions -->
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i>
+                    <i class="fa-solid fa-save" aria-hidden="true"></i>
                     {% if chantier %}Modifier{% else %}Créer{% endif %} le chantier
                 </button>
                 <a href="{% url 'core:chantiers' %}" class="btn btn-outline">
-                    <i class="fas fa-times"></i>
+                    <i class="fa-solid fa-times" aria-hidden="true"></i>
                     Annuler
                 </a>
                 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">
-                    <i class="fas fa-home"></i>
+                    <i class="fa-solid fa-home" aria-hidden="true"></i>
                     Retour à l'accueil
                 </a>
             </div>

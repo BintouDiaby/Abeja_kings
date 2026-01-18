@@ -1,44 +1,112 @@
 {% extends 'core/base.html' %}
 {% block title %}{% if fournisseur %}Modifier{% else %}Nouveau{% endif %} fournisseur{% endblock %}
+
+{% block extrastyle %}
+<style>
+/* Card form styles */
+.nice-form-card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 10px 30px rgba(15,23,42,0.06);max-width:920px;margin:8px 0}
+.nice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.nice-form-row{margin-bottom:12px}
+.nice-form-label{display:block;font-weight:700;color:#0f172a;margin-bottom:6px}
+.nice-input, textarea, select{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;background:#fbfdff;font-size:0.98rem}
+.nice-input:focus, textarea:focus, select:focus{outline:none;border-color:#7c5cff;box-shadow:0 6px 20px rgba(124,92,255,0.06)}
+.form-actions{display:flex;gap:10px;align-items:center;margin-top:14px}
+.btn-primary{background:linear-gradient(90deg,#5b6ff0,#8b5cf6);color:#fff;padding:10px 16px;border-radius:10px;border:none;font-weight:700}
+.btn-secondary{background:transparent;border:1px solid #e6e9ef;padding:9px 14px;border-radius:10px;color:#374151}
+.recent-panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:14px;border-radius:10px;border:1px solid rgba(15,23,42,0.03);max-width:360px}
+.recent-item{padding:8px;border-bottom:1px dashed rgba(15,23,42,0.04);}
+</style>
+{% endblock %}
+
 {% block content %}
-<form method="post">
-  {% csrf_token %}
+<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+  <div class="nice-form-card" style="flex:1">
+    <form method="post" id="fournisseur-form">
+      {% csrf_token %}
+      <div class="nice-form-grid">
+        <div class="nice-form-row">
+          <label class="nice-form-label" for="nom">Nom du fournisseur *</label>
+          <input class="nice-input" type="text" id="nom" name="nom" value="{{ fournisseur.nom|default:'' }}" required>
+        </div>
+        <div class="nice-form-row">
+          <label class="nice-form-label" for="contact">Contact</label>
+          <input class="nice-input" type="text" id="contact" name="contact" value="{{ fournisseur.contact|default:'' }}">
+        </div>
+      </div>
 
-  <div class="form-row">
-    <div class="form-group">
-      <label for="nom">Nom du fournisseur *</label>
-      <input type="text" id="nom" name="nom" value="{{ fournisseur.nom|default:'' }}" required>
-    </div>
-    <div class="form-group">
-      <label for="contact">Contact</label>
-      <input type="text" id="contact" name="contact" value="{{ fournisseur.contact|default:'' }}">
-    </div>
+      <div class="nice-form-grid">
+        <div class="nice-form-row">
+          <label class="nice-form-label" for="telephone">Téléphone</label>
+          <input class="nice-input" type="tel" id="telephone" name="telephone" value="{{ fournisseur.telephone|default:'' }}">
+        </div>
+        <div class="nice-form-row">
+          <label class="nice-form-label" for="email">Email</label>
+          <input class="nice-input" type="email" id="email" name="email" value="{{ fournisseur.email|default:'' }}">
+        </div>
+      </div>
+
+      <div class="nice-form-row">
+        <label class="nice-form-label" for="specialite">Spécialité</label>
+        <input class="nice-input" type="text" id="specialite" name="specialite" value="{{ fournisseur.specialite|default:'' }}" placeholder="Domaine de spécialisation">
+      </div>
+
+      <div class="nice-form-row">
+        <label class="nice-form-label" for="adresse">Adresse</label>
+        <textarea class="nice-input" id="adresse" name="adresse" rows="2">{{ fournisseur.adresse|default:'' }}</textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" id="submit-fournisseur">Enregistrer</button>
+        <a href="{% url 'core:fournisseurs' %}" class="btn-secondary">Annuler</a>
+      </div>
+    </form>
   </div>
 
-  <div class="form-row">
-    <div class="form-group">
-      <label for="telephone">Téléphone</label>
-      <input type="tel" id="telephone" name="telephone" value="{{ fournisseur.telephone|default:'' }}">
-    </div>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" value="{{ fournisseur.email|default:'' }}">
-    </div>
-  </div>
+  <aside class="recent-panel">
+    <h3 style="margin:0 0 8px 0">Fournisseurs récents</h3>
+    <div id="recent-fournisseurs">Chargement…</div>
+  </aside>
+</div>
 
-  <div class="form-group">
-    <label for="specialite">Spécialité</label>
-    <input type="text" id="specialite" name="specialite" value="{{ fournisseur.specialite|default:'' }}" placeholder="Domaine de spécialisation">
-  </div>
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  fetch('{% url "core:api_fournisseurs" %}')
+    .then(r=>r.json())
+    .then(data=>{
+      const container = document.getElementById('recent-fournisseurs');
+      container.innerHTML = '';
+      (data.fournisseurs||[]).slice(0,6).forEach(f=>{
+        const el = document.createElement('div'); el.className = 'recent-item';
+        el.innerHTML = `<strong style="display:block">${f.nom}</strong><div style="color:#666">${f.telephone||''}${f.email?'<br/>'+f.email:''}</div>`;
+        container.appendChild(el);
+      });
+      if((data.fournisseurs||[]).length===0) container.innerHTML = '<div>Aucun fournisseur</div>';
+    }).catch(()=>{ document.getElementById('recent-fournisseurs').innerText = 'Erreur de chargement'; });
 
-  <div class="form-group">
-    <label for="adresse">Adresse</label>
-    <textarea id="adresse" name="adresse" rows="2">{{ fournisseur.adresse|default:'' }}</textarea>
-  </div>
+  // AJAX submit
+  const form = document.getElementById('fournisseur-form');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const btn = document.getElementById('submit-fournisseur'); btn.disabled = true; btn.innerText = 'Enregistrement...';
+    const fd = new FormData(form);
+    fetch(location.href, {method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+      .then(r=>r.json())
+      .then(json=>{
+        if(json && json.ok){
+          const container = document.getElementById('recent-fournisseurs');
+          const el = document.createElement('div'); el.className='recent-item';
+          el.innerHTML = `<strong style="display:block">${json.nom}</strong><div style="color:#666">${json.telephone||''}${json.email?'<br/>'+json.email:''}</div>`;
+          if(container.firstChild) container.insertBefore(el, container.firstChild); else container.appendChild(el);
+          const datalist = document.getElementById('fournisseurs_list'); if(datalist){ const opt=document.createElement('option'); opt.value=json.nom; datalist.appendChild(opt);} 
+          const select = document.getElementById('fournisseur'); if(select){ const o=document.createElement('option'); o.value=json.id; o.text=json.nom; select.appendChild(o); select.value=json.id; }
+          form.reset();
+        } else { alert('Erreur: ' + (json && json.error ? json.error : 'Échec')); }
+      }).catch(()=>{ alert('Erreur réseau'); })
+      .finally(()=>{ btn.disabled=false; btn.innerText='Enregistrer'; });
+  });
+});
+</script>
+{% endblock %}
 
-  <div class="form-actions">
-    <button class="primary" type="submit">Enregistrer</button>
-    <a href="{% url 'core:fournisseurs' %}" class="secondary">Annuler</a>
-  </div>
-</form>
 {% endblock %}

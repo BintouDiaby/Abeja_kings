@@ -32,20 +32,31 @@
                 <h4>Toutes les factures</h4>
             </div>
             <div class="filters">
-                <div class="input-chip">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="factures-search" placeholder="Rechercher par client" aria-label="Rechercher par client">
+                <div class="filter-card">
+                    <div class="input-chip">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="factures-search" placeholder="Rechercher par client" aria-label="Rechercher par client">
+                    </div>
+                    <div class="input-chip">
+                        <i class="fa-regular fa-calendar"></i>
+                        <input type="date" id="factures-date-filter" aria-label="Filtrer par date">
+                    </div>
                 </div>
-                <div class="input-chip">
-                    <i class="fa-regular fa-calendar"></i>
-                    <input type="date" id="factures-date-filter" aria-label="Filtrer par date">
+                <div class="filters-actions">
+                    <a href="{% url 'core:facture_new' %}" class="btn-solid small"><i class="fa-solid fa-plus"></i> Nouvelle facture</a>
                 </div>
             </div>
         </div>
 
         <div class="stats-grid">
             <article class="stat-card">
-                <div class="icon-pill primary"><i class="fa-solid fa-file-invoice"></i></div>
+                <div class="icon-pill primary">
+                    <svg class="icon-invoice" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M4 2h9l6 6v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13 2v7h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 13h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 <div>
                     <p class="label">Factures</p>
                     <p class="value">{{ factures|length }}</p>
@@ -78,18 +89,59 @@
                         <td><span class="badge">#{{ f.id }}</span></td>
                         <td class="cell-flex"><i class="fa-regular fa-user"></i><span>{{ f.client.nom }}</span></td>
                         <td class="cell-flex"><i class="fa-regular fa-calendar-days"></i><span>{{ f.date|date:"d/m/Y" }}</span></td>
-                        <td><span class="amount format-number">{{ f.total|default:0|floatformat:0 }}</span></td>
-                        <td><span class="status-pill"><i class="fa-solid fa-check"></i> Payée</span></td>
+                        <td class="amount-cell"><span class="amount format-number">{{ f.total|default:0|floatformat:0 }}</span></td>
+                        <td>
+                            {% if f.statut == 'payee' %}
+                                <span class="status-pill status-payee"><i class="fa-solid fa-circle-check"></i> Payée</span>
+                            {% elif f.statut == 'brouillon' %}
+                                <span class="status-pill status-brouillon"><i class="fa-regular fa-pen-to-square"></i> Brouillon</span>
+                            {% elif f.statut == 'envoyee' %}
+                                <span class="status-pill status-envoyee"><i class="fa-solid fa-paper-plane"></i> Envoyée</span>
+                            {% elif f.statut == 'annulee' %}
+                                <span class="status-pill status-annulee"><i class="fa-solid fa-ban"></i> Annulée</span>
+                            {% else %}
+                                <span class="status-pill">{{ f.statut }}</span>
+                            {% endif %}
+                            {% if f.date_echeance and f.statut != 'payee' and f.date_echeance < today %}
+                                <span class="status-pill status-en-retard">En retard</span>
+                            {% endif %}
+                        </td>
                         <td class="actions">
-                            <button class="chip-btn" title="Voir détails" data-facture-id="{{ f.id }}"><i class="fa-regular fa-eye"></i></button>
-                            <button class="chip-btn ghost" title="Imprimer" data-facture-id="{{ f.id }}"><i class="fa-solid fa-print"></i></button>
+                            <a href="{% url 'core:facture_detail' f.id %}" class="chip-btn" title="Voir"><i class="fa-regular fa-eye"></i><span class="btn-label">Voir</span></a>
+                            <a href="{% url 'core:facture_detail' f.id %}?print=1" class="chip-btn ghost" title="Imprimer"><i class="fa-solid fa-print"></i><span class="btn-label">Imprimer</span></a>
+                            <a href="{% url 'core:facture_edit' f.id %}" class="chip-btn" title="Modifier"><i class="fa-regular fa-pen-to-square"></i><span class="btn-label">Modifier</span></a>
+                            {% if f.statut != 'payee' %}
+                                <form method="post" action="{% url 'core:facture_mark_paid' f.id %}" style="display:inline;" class="inline-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="chip-btn validate" title="Valider" onclick="return confirm('Marquer la facture #{{ f.id }} comme payée ?');"><i class="fa-solid fa-circle-check"></i><span class="btn-label">Valider</span></button>
+                                </form>
+                            {% endif %}
+                            {% if f.statut != 'annulee' %}
+                                <form method="post" action="{% url 'core:facture_mark_annulee' f.id %}" style="display:inline;" class="inline-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="chip-btn danger" title="Annuler" onclick="return confirm('Annuler la facture #{{ f.id }} ?');"><i class="fa-solid fa-ban"></i><span class="btn-label">Annuler</span></button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{% url 'core:facture_reopen' f.id %}" style="display:inline;" class="inline-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="chip-btn" title="Rouvrir" onclick="return confirm('Rouvrir la facture #{{ f.id }} ?');"><i class="fa-solid fa-rotate-left"></i><span class="btn-label">Rouvrir</span></button>
+                                </form>
+                            {% endif %}
+                            <form method="post" action="{% url 'core:facture_delete' f.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="chip-btn" title="Supprimer" onclick="return confirm('Supprimer définitivement la facture #{{ f.id }} ?');"><i class="fa-solid fa-trash"></i><span class="btn-label">Supprimer</span></button>
+                            </form>
                         </td>
                     </tr>
                     {% empty %}
                     <tr class="empty-row">
                         <td colspan="6">
                             <div class="empty-state">
-                                <i class="fa-solid fa-file-invoice"></i>
+                                <svg class="icon-invoice" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M4 2h9l6 6v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M13 2v7h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 13h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                                </svg>
                                 <h4>Aucune facture trouvée</h4>
                                 <p>Créez votre première facture pour commencer.</p>
                                 <a href="{% url 'core:facture_new' %}" class="btn-solid"><i class="fa-solid fa-plus"></i> Créer une facture</a>
@@ -273,6 +325,25 @@
     align-items: center;
     gap: 6px;
 }
+
+.status-payee { background: #ecfdf3; color: #166534; }
+.status-brouillon { background: #eef2ff; color: #3730a3; }
+.status-envoyee { background: #fff7ed; color: #92400e; }
+.status-annulee { background: #fff1f2; color: #991b1b; }
+.status-en-retard { background: #fff1f0; color: #92302a; }
+.status-partielle { background: #fff7ed; color: #b45309; }
+
+.filter-card { display:flex; gap:8px; align-items:center; background:#f8fafc; padding:8px; border-radius:10px; border:1px solid #e6eef8; }
+.filters-actions { display:flex; align-items:center; }
+.btn-solid.small { padding:8px 10px; font-size:13px; }
+
+.amount-cell { text-align: right; }
+.amount { font-weight:800; color:#0f172a; display:inline-block; min-width:90px; text-align:right; }
+
+.chip-btn { display:inline-flex; align-items:center; gap:8px; }
+.chip-btn .btn-label { font-size:13px; }
+.chip-btn.danger { border-color:#fecaca; background:#fff7f8; color:#991b1b; }
+.chip-btn.validate { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
 
 .actions { display: flex; gap: 8px; }
 
