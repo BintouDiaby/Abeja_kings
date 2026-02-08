@@ -29,7 +29,7 @@
       <p class="small">Créez une facture avec lignes dynamiques, calcule automatiquement les totaux.</p>
     </div>
     <div class="actions-row">
-      <a href="{% url 'core:factures' %}" class="btn-ghost">Retour</a>
+      <a href="{% url 'core:factures' %}" onclick="history.back(); return false;" class="btn-ghost" style="padding:8px 10px;border-radius:8px;background:#f3f4f6;color:#0f172a;border:1px solid #e2e8f0;text-decoration:none">← Retour</a>
       <button id="saveDraft" class="btn-ghost">Enregistrer brouillon</button>
     </div>
   </div>

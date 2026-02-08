@@ -246,6 +246,14 @@ class Materiau(models.Model):
     def est_en_rupture(self):
         return self.quantite_stock <= self.seuil_minimum
 
+    @property
+    def quantite_recommandee(self):
+        try:
+            rec = int(self.seuil_minimum) - int(self.quantite_stock)
+        except Exception:
+            rec = 0
+        return rec if rec > 0 else 1
+
     class Meta:
         verbose_name = "Matériau"
         verbose_name_plural = "Matériaux"
@@ -282,6 +290,30 @@ class Client(models.Model):
     class Meta:
         verbose_name = "Client"
         verbose_name_plural = "Clients"
+
+
+class Commande(models.Model):
+    STATUT_CHOICES = [
+        ('preparée', 'Préparée'),
+        ('envoyee', 'Envoyée'),
+        ('recue', 'Reçue'),
+        ('annulee', 'Annulée'),
+    ]
+
+    materiau = models.ForeignKey(Materiau, on_delete=models.CASCADE, related_name='commandes')
+    quantite = models.IntegerField()
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes')
+    demandeur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes_demandees')
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='preparée')
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Commande {self.materiau.nom} x{self.quantite} - {self.get_statut_display()}"
+
+    class Meta:
+        verbose_name = 'Commande'
+        verbose_name_plural = 'Commandes'
 
 
 class Facture(models.Model):

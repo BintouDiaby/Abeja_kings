@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% block title %}Commander fournisseur — {{ materiau.nom }}{% endblock %}
+{% block content %}
+<div class="content-area">
+  <div class="content-section">
+    <div class="section-header">
+      <h3>🛒 Commander — {{ materiau.nom }}</h3>
+      <div class="section-actions">
+        <a href="{% url 'core:materiaux' %}" class="btn btn-outline">← Retour aux matériaux</a>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <p>Quantité recommandée: <strong>{{ quantite_recommandee }}</strong> {{ materiau.unite }}</p>
+
+      <form method="post" action="{% url 'core:materiau_commander' materiau.pk %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="fournisseur">Choisir un fournisseur</label>
+          <select name="fournisseur" id="fournisseur" class="input">
+            <option value="">-- Sélectionner --</option>
+            {% for f in fournisseurs %}
+            <option value="{{ f.pk }}">{{ f.nom }}{% if f.contact_email %} — {{ f.contact_email }}{% endif %}{% if f.telephone %} — {{ f.telephone }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="quantite">Quantité</label>
+          <input type="number" name="quantite" id="quantite" value="{{ quantite_recommandee }}" min="1" class="input">
+        </div>
+
+        <div class="form-row">
+          <label for="message">Message / instructions (optionnel)</label>
+          <textarea name="message" id="message" rows="4" class="input" placeholder="Ex: Livraison demandée avant le ..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Envoyer la commande</button>
+          <a href="{% url 'core:materiaux' %}" class="btn btn-outline">Annuler</a>
+        </div>
+      </form>
+
+      <div class="supplier-help">
+        <h4>Contact rapide</h4>
+        <ul>
+          {% for f in fournisseurs %}
+            <li>
+              <strong>{{ f.nom }}</strong>
+              {% if f.contact_email %} — email: <a href="mailto:{{ f.contact_email }}">{{ f.contact_email }}</a>{% endif %}
+              {% if f.telephone %} — tel: <a href="tel:{{ f.telephone }}">{{ f.telephone }}</a>{% endif %}
+            </li>
+          {% empty %}
+            <li>Aucun fournisseur disponible. Ajoutez-en un depuis la section Fournisseurs.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

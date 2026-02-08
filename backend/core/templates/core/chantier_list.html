@@ -104,12 +104,23 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
-                                    <i class="fa-solid fa-edit" aria-hidden="true"></i>
-                                </a>
-                                <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
-                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                                </button>
+                                {% if request.user.userprofile %}
+                                    {% if request.user.userprofile.role == 'admin' or request.user.userprofile.role == 'directeur' %}
+                                        <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
+                                            <i class="fa-solid fa-edit" aria-hidden="true"></i>
+                                        </a>
+                                        <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
+                                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    {% elif request.user.userprofile.role == 'chef' and chantier.chef_chantier and chantier.chef_chantier.pk == request.user.pk %}
+                                        <a href="{% url 'core:chantier_update' chantier.pk %}" class="btn-action btn-edit" title="Modifier">
+                                            <i class="fa-solid fa-edit" aria-hidden="true"></i>
+                                        </a>
+                                        <button class="btn-action btn-delete" data-id="{{ chantier.pk }}" data-name="{{ chantier.nom }}" title="Supprimer">
+                                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

@@ -32,6 +32,9 @@
                 <a href="{% url 'core:materiau_create' %}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Nouveau Matériau
                 </a>
+                {% if request.user.userprofile and request.user.userprofile.role == 'comptable' %}
+                <button id="export-materiaux" class="btn btn-outline">📥 Exporter CSV</button>
+                {% endif %}
                 <a href="{% url 'core:dashboard' %}" class="btn btn-outline">
                     <i class="fas fa-home"></i> Retour à l'accueil
                 </a>
@@ -135,9 +138,30 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a href="{% url 'core:materiau_update' materiau.pk %}" class="btn-action btn-edit" title="Modifier">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                                {% if request.user.userprofile %}
+                                    {% if request.user.userprofile.role == 'admin' or request.user.userprofile.role == 'directeur' or request.user.userprofile.role == 'comptable' or request.user.userprofile.role == 'chef' %}
+                                        <a href="{% url 'core:materiau_update' materiau.pk %}" class="btn-action btn-edit" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'core:materiau_delete' materiau.pk %}" style="display:inline;" onsubmit="return confirm('Supprimer ce matériau ? Cette action est irréversible.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action btn-delete" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <a href="{% url 'core:materiau_update' materiau.pk %}" class="btn-action btn-edit" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
+
+                                    {# Commander quick action when stock under threshold #}
+                                    {% if materiau.est_en_rupture %}
+                                        <a href="{% url 'core:materiau_commander' materiau.pk %}" class="btn btn-order" style="display:inline; margin-left:6px;" title="Commander">
+                                            🛒 Commander
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -502,6 +526,37 @@ document.addEventListener('DOMContentLoaded', function() {
             element.textContent = number.toLocaleString('fr-FR');
         }
     });
+
+    // Export CSV pour comptable
+    const exportBtn = document.getElementById('export-materiaux');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', async function(){
+            exportBtn.disabled = true;
+            exportBtn.textContent = 'Export en cours...';
+            try {
+                const res = await fetch('{% url "core:api_materiaux" %}');
+                const json = await res.json();
+                const items = json.materiaux || [];
+                const rows = [ ['Nom','Categorie','Stock','Unité','Seuil','Prix Unitaire','Fournisseur'] ];
+                items.forEach(it => rows.push([it.nom, it.categorie, it.quantite_stock, it.unite, it.seuil_minimum, it.prix_unitaire, it.fournisseur || '']));
+                const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'materiaux_export.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('Erreur lors de l\'export.');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.textContent = '📥 Exporter CSV';
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

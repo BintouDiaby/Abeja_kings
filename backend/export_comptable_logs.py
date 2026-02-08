@@ -3,10 +3,10 @@ import django
 import sys
 from datetime import datetime
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.backend_project.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend_project.settings')
 # Compute reliable project paths based on this file's location so the script
 # works when invoked from any CWD.
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) 
 # `export_comptable_logs.py` lives inside the `backend/` package
 BACKEND_PKG = SCRIPT_DIR
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)

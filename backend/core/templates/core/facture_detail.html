@@ -15,8 +15,9 @@
       <p>Émise le {{ facture.date|date:'d/m/Y' }} · Échéance {{ facture.date_echeance|date:'d/m/Y' }}</p>
     </div>
     <div class="actions">
+      <a href="{% url 'core:factures' %}" onclick="history.back(); return false;" class="btn-ghost" style="margin-right:8px;padding:8px 10px;border-radius:8px;background:#f3f4f6;color:#0f172a;border:1px solid #e2e8f0;text-decoration:none">← Retour</a>
       {% if request.user.userprofile.role != 'chef' %}
-      <a href="#" class="btn">Télécharger PDF</a>
+      <a href="{% url 'core:facture_pdf' facture.pk %}" class="btn">Télécharger PDF</a>
       <a href="#" class="btn">Envoyer au client</a>
       {% endif %}
       {% if request.user.userprofile.role == 'admin' or request.user.userprofile.role == 'comptable' %}

@@ -14,6 +14,7 @@ urlpatterns = [
     path('factures/', views.FactureListView.as_view(), name='factures'),
     path('factures/new/', views.FactureCreateView.as_view(), name='facture_new'),
     path('factures/<int:pk>/', views.FactureDetailView.as_view(), name='facture_detail'),
+    path('factures/<int:pk>/pdf/', views.facture_pdf, name='facture_pdf'),
     path('factures/<int:pk>/edit/', views.FactureUpdateView.as_view(), name='facture_edit'),
     path('factures/<int:pk>/delete/', views.facture_delete, name='facture_delete'),
     path('factures/<int:pk>/marquer_payee/', views.facture_mark_paid, name='facture_mark_paid'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('users/', views.UserListView.as_view(), name='users'),
     path('users/new/', views.UserCreateView.as_view(), name='user_new'),
     path('users/<int:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
+    path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
     path('api/user/', views.get_current_user, name='current_user'),
     path('set-csrf/', views.set_csrf, name='set_csrf'),
 
@@ -44,6 +46,8 @@ urlpatterns = [
     path('materiaux/', views.MateriauListView.as_view(), name='materiaux'),
     path('materiaux/new/', views.MateriauCreateView.as_view(), name='materiau_create'),
     path('materiaux/<int:pk>/edit/', views.MateriauUpdateView.as_view(), name='materiau_update'),
+    path('materiaux/<int:pk>/delete/', views.MateriauDeleteView.as_view(), name='materiau_delete'),
+    path('materiaux/<int:pk>/commander/', views.commande_create, name='materiau_commander'),
 
     # URLs pour Fournisseur
     path('fournisseurs/', views.FournisseurListView.as_view(), name='fournisseurs'),

@@ -443,16 +443,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Gestionnaires d'événements pour les boutons d'action
     document.querySelectorAll('.chip-btn:not(.ghost)').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(event) {
             const factureId = this.dataset.factureId;
-            viewFacture(factureId);
+            // If element has explicit data-facture-id, navigate programmatically
+            if (factureId) {
+                event.preventDefault();
+                window.location.href = '/factures/' + factureId + '/';
+            }
+            // otherwise allow default (e.g. anchor href)
         });
     });
 
     document.querySelectorAll('.chip-btn.ghost').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(event) {
             const factureId = this.dataset.factureId;
-            printFacture(factureId);
+            if (factureId) {
+                event.preventDefault();
+                // open printable view in new tab
+                window.open('/factures/' + factureId + '/?print=1', '_blank');
+            }
         });
     });
 
@@ -466,14 +475,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Fonctions pour les actions des factures
-function viewFacture(id) {
-    // TODO: Implémenter la vue détaillée de la facture
-    alert('Vue détaillée de la facture #' + id + ' - Fonctionnalité à implémenter');
-}
-
-function printFacture(id) {
-    // TODO: Implémenter l'impression de la facture
-    alert('Impression de la facture #' + id + ' - Fonctionnalité à implémenter');
-}
+// Legacy helpers removed — actions navigate via anchors or dataset attributes.
 </script>
 {% endblock %}

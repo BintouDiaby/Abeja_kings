@@ -32,6 +32,76 @@ from decimal import Decimal
 import datetime
 import calendar
 from django.db.models import Sum
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+
+from django.template.loader import render_to_string
+from io import BytesIO
+from django.contrib.staticfiles import finders
+import os
+try:
+    from xhtml2pdf import pisa
+except Exception:
+    pisa = None
+
+@ensure_csrf_cookie
+@login_required
+def commande_create(request, pk):
+    """Serve a supplier-contact page on GET and create a Commande on POST.
+
+    GET: render a small form where the user can pick a fournisseur, edit quantity
+         and include a message before sending.
+    POST: create the `Commande` and redirect back to the materials list with a flash.
+    """
+    profile = getattr(request.user, 'userprofile', None)
+    materiau = get_object_or_404(Materiau, pk=pk)
+
+    # Only allow certain roles to create commande
+    if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'chef'):
+        messages.error(request, "Vous n'avez pas la permission de créer une commande.")
+        return redirect(reverse('core:materiaux'))
+
+    from .models import Commande
+
+    # GET -> show supplier contact / order form
+    if request.method == 'GET':
+        fournisseurs = Fournisseur.objects.order_by('nom')
+        context = {
+            'materiau': materiau,
+            'fournisseurs': fournisseurs,
+            'quantite_recommandee': materiau.quantite_recommandee,
+        }
+        return render(request, 'core/commande_form.html', context)
+
+    # POST -> create the commande (existing logic)
+    try:
+        quantite = int(request.POST.get('quantite', 0))
+    except Exception:
+        quantite = 0
+
+    if quantite <= 0:
+        # fallback: recommended = seuil - stock or 1
+        recommended = materiau.seuil_minimum - materiau.quantite_stock
+        quantite = recommended if recommended > 0 else 1
+
+    fournisseur_id = request.POST.get('fournisseur')
+    fournisseur = None
+    if fournisseur_id:
+        try:
+            fournisseur = Fournisseur.objects.get(pk=int(fournisseur_id))
+        except Exception:
+            fournisseur = None
+
+    commande = Commande.objects.create(
+        materiau=materiau,
+        quantite=quantite,
+        fournisseur=fournisseur,
+        demandeur=request.user,
+        statut='preparée'
+    )
+
+    messages.success(request, f'Commande créée: {materiau.nom} x{quantite}.')
+    return redirect(reverse('core:materiaux'))
 
 
 
@@ -42,7 +112,7 @@ class DashboardView(View):
         try:
             # Statistiques générales
             total_chantiers = Chantier.objects.count()
-            chantiers_actifs = Chantier.objects.filter(statut='en_cours').count()
+            chantiers_actifs = Chantier.objects.filter(statut='en_cours').count()  # Count active projects
             chantiers_termines = Chantier.objects.filter(statut='termine').count()
 
             total_personnel = Personnel.objects.filter(est_actif=True).count()
@@ -121,8 +191,15 @@ class DashboardView(View):
                 chantiers_termines = 0
                 # Le comptable doit pouvoir voir et gérer le personnel (paiements,
                 # fiches de paie, etc.). Ne pas écraser `total_personnel` ici.
-                rapports_count = 0
-                rapports_recents = []
+
+                # Afficher les rapports rédigés par le comptable (au lieu de forcer 0)
+                try:
+                    rapports_qs = Rapport.objects.select_related('chantier').filter(auteur=request.user).order_by('-created_at')
+                    rapports_count = rapports_qs.count()
+                    rapports_recents = rapports_qs[:5]
+                except Exception:
+                    rapports_count = 0
+                    rapports_recents = []
 
                 # Compteurs et métriques utiles pour le comptable
                 try:
@@ -217,7 +294,7 @@ class DashboardView(View):
 class ClientListView(View):
     def get(self, request):
         profile = getattr(request.user, 'userprofile', None)
-        # Restrict access: only admin, directeur, comptable and chef can view clients
+            # Restrict access: only admin, directeur, comptable, and chef can view clients
         if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'chef'):
             return redirect(reverse('core:dashboard'))
 
@@ -287,8 +364,14 @@ def personnel_payments_history(request):
 
     # Base personnels queryset, optionally filter by chantier
     personnels_qs = Personnel.objects.order_by('user__last_name')
-    if chantier_id:
-        personnels_qs = personnels_qs.filter(chantier_actuel_id=chantier_id)
+    # sanitize chantier_id: ignore empty strings or the string 'None' (coming from UI)
+    if chantier_id and chantier_id.lower() != 'none':
+        try:
+            chantier_id_int = int(chantier_id)
+            personnels_qs = personnels_qs.filter(chantier_actuel_id=chantier_id_int)
+        except Exception:
+            # ignore invalid chantier filter values
+            pass
 
     # Build rows: expected_net (salary) and paid for the date range
     rows = []
@@ -439,7 +522,7 @@ class ClientUpdateView(View):
 
     def post(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur', 'chef'):
+        if not profile or profile.role not in ('admin', 'directeur', 'chef', 'comptable'):
             return redirect(reverse('core:dashboard'))
         client = get_object_or_404(Client, pk=pk)
         form = ClientForm(request.POST, instance=client)
@@ -454,7 +537,7 @@ class FactureListView(View):
     def get(self, request):
         # Seuls les admins peuvent accéder aux factures
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur', 'comptable'):
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'chef'):
             return redirect(reverse('core:dashboard'))
         
         factures = Facture.objects.select_related('client').all().order_by('-created_at')
@@ -474,7 +557,7 @@ class FactureDetailView(View):
     def get(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
         # Seuls admin (et potentiellement gerant) peuvent voir les détails financiers
-        if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'gerant'):
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'gerant', 'chef'):
             # Les chefs ne doivent pas accéder aux factures
             return redirect(reverse('core:dashboard'))
 
@@ -513,6 +596,50 @@ class FactureDetailView(View):
                 facture.statut = 'payee'
                 facture.save()
         return redirect(reverse('core:facture_detail', args=[pk]))
+
+
+@login_required
+def facture_pdf(request, pk):
+    profile = getattr(request.user, 'userprofile', None)
+    if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'gerant', 'chef'):
+        return redirect(reverse('core:dashboard'))
+
+    facture = get_object_or_404(Facture, pk=pk)
+    payments = facture.payments.order_by('-date') if hasattr(facture, 'payments') else []
+
+    context = {
+        'facture': facture,
+        'payments': payments,
+        'payment_form': PaymentForm(),
+        'printable': True,
+    }
+
+    html = render_to_string('core/facture_detail.html', context, request=request)
+
+    if pisa is None:
+        return HttpResponse('PDF generation library not installed. Please install xhtml2pdf.', status=500)
+
+    result = BytesIO()
+
+    def link_callback(uri, rel):
+        # Resolve static and media URIs to filesystem paths for xhtml2pdf
+        if uri.startswith(settings.STATIC_URL):
+            path = finders.find(uri.replace(settings.STATIC_URL, ''))
+            if path:
+                return path
+        if uri.startswith(settings.MEDIA_URL):
+            media_path = uri.replace(settings.MEDIA_URL, '')
+            return os.path.join(settings.MEDIA_ROOT, media_path)
+        return uri
+
+    pdf = pisa.CreatePDF(src=html, dest=result, link_callback=link_callback)
+    if pdf.err:
+        return HttpResponse('Erreur lors de la génération du PDF', status=500)
+
+    response = HttpResponse(result.getvalue(), content_type='application/pdf')
+    filename = f"facture-{facture.numero}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @method_decorator(login_required, name='dispatch')
@@ -801,6 +928,11 @@ class UserCreateView(View):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # save additional fields provided in the template
+            user.first_name = request.POST.get('first_name', '')
+            user.last_name = request.POST.get('last_name', '')
+            user.email = request.POST.get('email', '')
+            user.save()
             # Créer le profil utilisateur
             UserProfile.objects.create(
                 user=user,
@@ -838,9 +970,35 @@ class UserUpdateView(View):
         profile_obj.role = request.POST.get('role', profile_obj.role)
         profile_obj.telephone = request.POST.get('telephone', profile_obj.telephone)
         profile_obj.save()
-
-        messages.success(request, f'Utilisateur {user.username} mis à jour avec succès.')
+        messages.success(request, f'Profil mis à jour pour {user.username}.')
         return redirect(reverse('core:users'))
+
+
+@login_required
+def user_delete(request, pk):
+    """Delete a user. Only admin or directeur may delete users.
+    Confirmation must be a POST request from the edit form.
+    """
+    profile = getattr(request.user, 'userprofile', None)
+    if not profile or profile.role not in ('admin', 'directeur'):
+        return redirect(reverse('core:dashboard'))
+
+    if request.method != 'POST':
+        return redirect(reverse('core:user_edit', args=[pk]))
+
+    user = get_object_or_404(User, pk=pk)
+    # Prevent deleting self
+    if user == request.user:
+        messages.error(request, "Vous ne pouvez pas supprimer votre propre compte.")
+        return redirect(reverse('core:user_edit', args=[pk]))
+
+    try:
+        user.delete()
+        messages.success(request, f'Utilisateur {user.username} supprimé.')
+    except Exception:
+        messages.error(request, "Erreur lors de la suppression de l'utilisateur.")
+
+    return redirect(reverse('core:users'))
 
 
 @login_required
@@ -1378,9 +1536,17 @@ class ChantierCreateView(View):
 class ChantierUpdateView(View):
     def get(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur'):
-            return redirect(reverse('core:dashboard'))
         chantier = get_object_or_404(Chantier, pk=pk)
+        # Admins and directeurs can edit any chantier. A 'chef' can edit only their own chantier.
+        if not profile:
+            return redirect(reverse('core:dashboard'))
+        if profile.role in ('admin', 'directeur'):
+            pass
+        elif profile.role == 'chef':
+            if chantier.chef_chantier != request.user:
+                return redirect(reverse('core:dashboard'))
+        else:
+            return redirect(reverse('core:dashboard'))
         clients = Client.objects.all().order_by('nom')
         chefs_chantier = User.objects.filter(userprofile__role='chef').order_by('last_name')
         return render(request, 'core/chantier_form.html', {
@@ -1391,9 +1557,16 @@ class ChantierUpdateView(View):
 
     def post(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur'):
-            return redirect(reverse('core:dashboard'))
         chantier = get_object_or_404(Chantier, pk=pk)
+        if not profile:
+            return redirect(reverse('core:dashboard'))
+        if profile.role in ('admin', 'directeur'):
+            pass
+        elif profile.role == 'chef':
+            if chantier.chef_chantier != request.user:
+                return redirect(reverse('core:dashboard'))
+        else:
+            return redirect(reverse('core:dashboard'))
         try:
             chantier.nom = request.POST['nom']
             chantier.client_id = request.POST['client']
@@ -1415,10 +1588,19 @@ class ChantierUpdateView(View):
 @method_decorator(login_required, name='dispatch')
 class ChantierDeleteView(View):
     def post(self, request, pk):
-        profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur'):
-            return redirect(reverse('core:dashboard'))
         chantier = get_object_or_404(Chantier, pk=pk)
+        profile = getattr(request.user, 'userprofile', None)
+
+        allowed = False
+        if profile:
+            if profile.role in ('admin', 'directeur'):
+                allowed = True
+            elif profile.role == 'chef' and chantier.chef_chantier and chantier.chef_chantier.pk == request.user.pk:
+                allowed = True
+
+        if not allowed:
+            return redirect(reverse('core:dashboard'))
+
         chantier_name = chantier.nom
 
         try:
@@ -1515,7 +1697,7 @@ class PersonnelCreateView(View):
 class PersonnelUpdateView(View):
     def get(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur'):
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable'):
             return redirect(reverse('core:dashboard'))
         personnel = get_object_or_404(Personnel, pk=pk)
         chantiers = Chantier.objects.filter(statut__in=['planifie', 'en_cours']).order_by('nom')
@@ -1526,7 +1708,7 @@ class PersonnelUpdateView(View):
 
     def post(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur'):
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable'):
             return redirect(reverse('core:dashboard'))
         personnel = get_object_or_404(Personnel, pk=pk)
         try:
@@ -1570,15 +1752,15 @@ class MateriauListView(View):
 class MateriauCreateView(View):
     def get(self, request):
         profile = getattr(request.user, 'userprofile', None)
-        # Seul l'admin, le directeur applicatif ou le chef peuvent créer/modifier les matériaux
-        if not profile or profile.role not in ('admin', 'directeur', 'chef'):
+        # Seul l'admin, le directeur applicatif, le chef ou le comptable peuvent créer/modifier les matériaux
+        if not profile or profile.role not in ('admin', 'directeur', 'chef', 'comptable'):
             return redirect(reverse('core:dashboard'))
         fournisseurs = Fournisseur.objects.all().order_by('nom')
         return render(request, 'core/materiau_form.html', {'fournisseurs': fournisseurs})
 
     def post(self, request):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur', 'chef'):
+        if not profile or profile.role not in ('admin', 'directeur', 'chef', 'comptable'):
             return redirect(reverse('core:dashboard'))
         try:
             materiau = Materiau.objects.create(
@@ -1602,7 +1784,7 @@ class MateriauCreateView(View):
 class MateriauUpdateView(View):
     def get(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur', 'chef'):
+        if not profile or profile.role not in ('admin', 'directeur', 'chef', 'comptable'):
             return redirect(reverse('core:dashboard'))
         materiau = get_object_or_404(Materiau, pk=pk)
         fournisseurs = Fournisseur.objects.all().order_by('nom')
@@ -1613,7 +1795,7 @@ class MateriauUpdateView(View):
 
     def post(self, request, pk):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'directeur', 'chef'):
+        if not profile or profile.role not in ('admin', 'directeur', 'chef', 'comptable'):
             return redirect(reverse('core:dashboard'))
         materiau = get_object_or_404(Materiau, pk=pk)
         try:
@@ -1631,6 +1813,27 @@ class MateriauUpdateView(View):
         except Exception as e:
             messages.error(request, f'Erreur lors de la mise à jour du matériau: {str(e)}')
             return redirect(reverse('core:materiau_update', kwargs={'pk': pk}))
+
+
+@method_decorator(login_required, name='dispatch')
+class MateriauDeleteView(View):
+    def post(self, request, pk):
+        materiau = get_object_or_404(Materiau, pk=pk)
+        profile = getattr(request.user, 'userprofile', None)
+
+        # Allow admin, directeur, comptable and chef to delete materials
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'chef'):
+            messages.error(request, "Vous n'avez pas la permission de supprimer ce matériau.")
+            return redirect(reverse('core:materiaux'))
+
+        materiau_name = materiau.nom
+        try:
+            materiau.delete()
+            messages.success(request, f'Matériau "{materiau_name}" supprimé avec succès.')
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression du matériau: {str(e)}')
+
+        return redirect(reverse('core:materiaux'))
 
 
 # Vues pour Fournisseur
@@ -1651,7 +1854,7 @@ class FournisseurCreateView(View):
 
     def post(self, request):
         profile = getattr(request.user, 'userprofile', None)
-        if not profile or profile.role not in ('admin', 'comptable', 'chef'):
+        if not profile or profile.role not in ('admin', 'directeur', 'comptable', 'chef'):
             return redirect(reverse('core:dashboard'))
 
         try:

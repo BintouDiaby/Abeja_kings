@@ -2,7 +2,12 @@
 {% block title %}Historique Paiements Personnel{% endblock %}
 {% block content %}
 <div class="content-area">
-  <h2>Paiement du personnel</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">
+    <h2 style="margin:0">Paiement du personnel</h2>
+    <div>
+      <a href="{% url 'core:personnel' %}" onclick="history.back(); return false;" class="btn-ghost" style="padding:8px 10px;border-radius:8px;background:#f3f4f6;color:#0f172a;border:1px solid #e2e8f0;text-decoration:none">← Retour</a>
+    </div>
+  </div>
   <form method="get" style="display:flex;gap:12px;align-items:end;margin-bottom:14px">
     <div>
       <label>Mois</label>

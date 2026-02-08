@@ -50,6 +50,15 @@
     <a href="{% url 'core:dashboard' %}" class="brand-mark">Abeja Kings</a>
     <span class="pill live-pill">Suite interne</span>
   </div>
+  {% url 'core:dashboard' as dashboard_url %}
+  {% if request.path != dashboard_url %}
+    <button id="global-back" class="ghost-link" style="margin-left:8px; display:inline-flex; align-items:center; gap:8px;" onclick="(function(){ if(history.length>1){ history.back(); } else { window.location.href='{{ dashboard_url }}'; } })()" aria-label="Retour">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Retour</span>
+    </button>
+  {% endif %}
   {% if request.user.is_authenticated %}
   <nav class="topnav">
     {% if request.user.userprofile %}
@@ -102,6 +111,7 @@
   <div class="user-actions">
     {% if request.user.is_authenticated %}
       <span class="user-name"><i class="fa-regular fa-circle-user"></i> {{ request.user.get_full_name|default:request.user.username }}</span>
+      {# Quick action links for comptable moved to the dashboard page (# actions rapides) #}
       <form id="logout-form" method="post" action="{% url 'logout' %}" class="logout-form">
         {% csrf_token %}
         <button type="submit" class="ghost-btn">Déconnexion</button>

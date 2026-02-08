@@ -33,6 +33,10 @@
           <label class="nice-form-label" for="id_password1">Mot de passe</label>
           {{ form.password1 }}
         </div>
+        <div>
+          <label class="nice-form-label" for="id_password2">Confirmer le mot de passe</label>
+          {{ form.password2 }}
+        </div>
         {% endif %}
       </div>
       <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -69,6 +73,14 @@
         <a href="{% url 'core:users' %}" class="btn-secondary">Annuler</a>
       </div>
     </form>
+    {% if is_update %}
+    <div style="margin-top:12px;">
+      <form method="post" action="{% url 'core:user_delete' form.instance.pk %}" onsubmit="return confirm('Confirmer la suppression de cet utilisateur ?');">
+        {% csrf_token %}
+        <button type="submit" class="btn-secondary" style="background:#fff;border:1px solid #f3c1c1;color:#b91c1c">Supprimer</button>
+      </form>
+    </div>
+    {% endif %}
   </div>
 
   <aside class="recent-panel">
