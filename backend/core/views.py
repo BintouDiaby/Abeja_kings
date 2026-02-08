@@ -522,9 +522,21 @@ class CustomLoginView(auth_views.LoginView):
                     'role': role,
                     'password': defaults.get(u.username),
                 })
+            # Si aucun compte trouvé, fournir un fallback visuel (exemples) pour faciliter les tests
+            if not accounts:
+                accounts = [
+                    {'username': 'admin', 'email': 'admin@abeja.kings', 'role': 'admin', 'password': 'admin123'},
+                    {'username': 'chef', 'email': 'chef@abeja.kings', 'role': 'chef', 'password': 'password123'},
+                    {'username': 'ouvrier', 'email': 'ouvrier@abeja.kings', 'role': 'ouvrier', 'password': 'password123'},
+                ]
             context['test_accounts'] = accounts
         except Exception:
-            context['test_accounts'] = []
+            # En cas d'erreur imprévue, afficher aussi le fallback pour éviter la page vide
+            context['test_accounts'] = [
+                {'username': 'admin', 'email': 'admin@abeja.kings', 'role': 'admin', 'password': 'admin123'},
+                {'username': 'chef', 'email': 'chef@abeja.kings', 'role': 'chef', 'password': 'password123'},
+                {'username': 'ouvrier', 'email': 'ouvrier@abeja.kings', 'role': 'ouvrier', 'password': 'password123'},
+            ]
         return context
 
 
