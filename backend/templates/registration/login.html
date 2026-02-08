@@ -57,9 +57,23 @@
 
         <div class="login-info">
             <h4>Comptes de test :</h4>
-            <p><strong>Admin:</strong> admin@abeja.kings / admin123</p>
-            <p><strong>Chef:</strong> chef@abeja.kings / password123</p>
-            <p><strong>Ouvrier:</strong> ouvrier@abeja.kings / password123</p>
+            {% if test_accounts %}
+                {% for acc in test_accounts %}
+                    <p>
+                        <strong>
+                            {% if acc.role %}{{ acc.role|capfirst }}:{% else %}Utilisateur:{% endif %}
+                        </strong>
+                        {{ acc.email }}
+                        {% if acc.password %}
+                            / {{ acc.password }}
+                        {% else %}
+                            / (mot de passe non affiché)
+                        {% endif %}
+                    </p>
+                {% endfor %}
+            {% else %}
+                <p>Aucun compte de test trouvé.</p>
+            {% endif %}
         </div>
     </div>
 </div>

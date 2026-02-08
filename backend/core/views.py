@@ -494,6 +494,39 @@ class CustomLoginView(auth_views.LoginView):
         logger.debug('Login form_invalid: username=%r, auth_ok=%s, form_errors=%s', username, auth_ok, form.errors.as_json())
         return super().form_invalid(form)
 
+    def get_context_data(self, **kwargs):
+        """Ajouter `test_accounts` au contexte pour affichage dans le template de login.
+
+        On récupère les utilisateurs dont l'email se termine par `@abeja.kings`.
+        Pour les comptes créés par le script de test, le mot de passe par défaut
+        est connu (password123) — on l'expose pour faciliter les tests.
+        """
+        context = super().get_context_data(**kwargs)
+        try:
+            test_qs = User.objects.filter(email__endswith='@abeja.kings').order_by('username')
+            defaults = {
+                'chef': 'password123',
+                'ouvrier': 'password123',
+                'admin_user': 'password123',
+                'comptable': 'password123',
+            }
+            accounts = []
+            for u in test_qs:
+                try:
+                    role = getattr(u.userprofile, 'role', '') or ''
+                except Exception:
+                    role = ''
+                accounts.append({
+                    'username': u.username,
+                    'email': u.email,
+                    'role': role,
+                    'password': defaults.get(u.username),
+                })
+            context['test_accounts'] = accounts
+        except Exception:
+            context['test_accounts'] = []
+        return context
+
 
 @method_decorator(login_required, name='dispatch')
 class ClientCreateView(View):
